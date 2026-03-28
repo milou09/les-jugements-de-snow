@@ -1,26 +1,18 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import Canvas from './components/Canvas.tsx';
-import ZonePanel from './components/ZonePanel.tsx';
-import GlassLibrary, { normalizeGlass } from './components/GlassLibrary.tsx';
-import type { Glass } from './components/GlassLibrary.tsx';
-import ResultScreen from './components/ResultScreen.tsx';
+import Canvas from './components/Canvas';
+import ZonePanel from './components/ZonePanel';
+import GlassLibrary, { normalizeGlass } from './components/GlassLibrary';
+import type { Glass } from './components/GlassLibrary';
+import ResultScreen from './components/ResultScreen';
+import { Acorn, WildFlower, PineBranch, LeafBranch } from './components/svg/Illustrations';
+import { useZoom } from './hooks/useZoom';
+import { detectZone } from './hooks/useZoneDetection';
+import type { Zone } from './hooks/useZoneDetection';
+import type { SnowMood } from './components/svg/Illustrations';
 import {
-  Acorn,
-  WildFlower,
-  PineBranch,
-  LeafBranch,
-} from './components/svg/Illustrations.tsx';
-import { useZoom } from './hooks/useZoom.ts';
-import { detectZone } from './hooks/useZoneDetection.ts';
-import type { Zone } from './hooks/useZoneDetection.ts';
-import type { SnowMood } from './components/svg/Illustrations.tsx';
-import {
-  C_FUNNY,
-  C_ABSURD,
-  C_ROAST,
-  getPriceCompliments,
-  getColorCompliments,
-} from './constants/compliments.ts';
+  C_FUNNY, C_ABSURD, C_ROAST,
+  getPriceCompliments, getColorCompliments,
+} from './constants/compliments';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 const MAX_WIDTH = 1000;
