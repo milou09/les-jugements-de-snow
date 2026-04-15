@@ -17,7 +17,42 @@ import {
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 const MAX_WIDTH = 1000;
 const GLASS_STORAGE_KEY = 'vitrail_tiffany_glasses_v2';
+const PROJECTS_STORAGE_KEY = 'vitrail_tiffany_projects_v1';
+type SavedProjectState = {
+  imageSrc: string | null;
+  zones: Zone[];
+  scale: number | null;
+  scaleLine: { x1: number; y1: number; x2: number; y2: number } | null;
+  glasses: Glass[];
+  copperPricePerMeter: string;
+  solderPricePerMeter: string;
+  laborHours: string;
+  laborRate: string;
+  pricingMode: string;
+  customFormula: string;
+};
 
+type SavedProject = {
+  id: string;
+  name: string;
+  savedAt: string;
+  state: SavedProjectState;
+};
+
+function loadSavedProjects(): SavedProject[] {
+  try {
+    const raw = localStorage.getItem(PROJECTS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSavedProjects(projects: SavedProject[]) {
+  localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+}
 function toSafeNumber(v: unknown, fb = 0): number {
   const n = parseFloat(String(v ?? '').replace(',', '.'));
   return isFinite(n) ? n : fb;
@@ -249,6 +284,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'current' | 'saved' | 'bank'>(
     'current'
   );
+  const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
 
   const {
     zoomLevel,
@@ -299,6 +335,13 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(GLASS_STORAGE_KEY, JSON.stringify(glasses));
   }, [glasses]);
+  useEffect(() => {
+  setSavedProjects(loadSavedProjects());
+}, []);
+
+useEffect(() => {
+  saveSavedProjects(savedProjects);
+}, [savedProjects])
 
   // ── Load image ──
   useEffect(() => {
@@ -378,6 +421,75 @@ export default function App() {
     reader.readAsDataURL(file);
   };
 
+  const collectCurrentProjectState = (): SavedProjectState => ({
+  imageSrc,
+  zones,
+  scale,
+  scaleLine,
+  glasses,
+  copperPricePerMeter,
+  solderPricePerMeter,
+  laborHours,
+  laborRate,
+  pricingMode,
+  customFormula,
+});
+
+const applyProjectState = (state: SavedProjectState) => {
+  setMode('zone');
+  setSelectedZoneId(null);
+  setPendingScalePixels(null);
+  setScaleInputCm('');
+  setShowResult(false);
+
+  setZones(state.zones || []);
+  setScale(state.scale ?? null);
+  setScaleLine(state.scaleLine ?? null);
+  setGlasses((state.glasses || []).map(normalizeGlass).filter(Boolean) as Glass[]);
+  setCopperPricePerMeter(state.copperPricePerMeter ?? '');
+  setSolderPricePerMeter(state.solderPricePerMeter ?? '');
+  setLaborHours(state.laborHours ?? '');
+  setLaborRate(state.laborRate ?? '');
+  setPricingMode(state.pricingMode ?? 'x2_materiaux');
+  setCustomFormula(state.customFormula ?? '(cost_total * 2.5) + 20');
+
+  zoneCounterRef.current = (state.zones || []).reduce(
+    (m, z) => Math.max(m, z.id || 0),
+    0
+  );
+
+  if (state.imageSrc) {
+    setImageSrc(state.imageSrc);
+  } else {
+    setImageSrc(null);
+    setImageElement(null);
+    setCanvasSize({ width: 0, height: 0 });
+    setBaseImageData(null);
+  }
+};
+
+const saveProject = () => {
+  const name = prompt('Nom du projet à sauvegarder ?');
+  if (!name || !name.trim()) return;
+
+  const project: SavedProject = {
+    id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    name: name.trim(),
+    savedAt: new Date().toISOString(),
+    state: collectCurrentProjectState(),
+  };
+
+  setSavedProjects((prev) => [project, ...prev]);
+};
+
+const openSavedProject = (project: SavedProject) => {
+  applyProjectState(project.state);
+  setActiveTab('current');
+};
+
+const deleteSavedProject = (id: string) => {
+  setSavedProjects((prev) => prev.filter((p) => p.id !== id));
+};
   // ── Pointer coords ──
   const getXY = useCallback(
     (e: React.PointerEvent) => {
@@ -665,7 +777,11 @@ export default function App() {
           >
             {mode === 'scale' ? '→ Zones' : '⟷ Échelle'}
           </button>
-        </div>
+          </div>
+
+<button type="button" onClick={saveProject} className="btn-g wfull mt2">
+  Sauvegarder ce projet
+</button>
 
         {/* Image import */}
         <div className="card mt4">
@@ -971,13 +1087,49 @@ export default function App() {
         )}
 
         {activeTab === 'saved' && (
-          <div className="card mt3">
-            <p className="ctitle">
-              <span>🗂️</span>Projets sauvegardés
-            </p>
-            <p className="tmu">Cette section arrive bientôt.</p>
+  <div className="card mt3">
+    <p className="ctitle">
+      <span>🗂️</span>Projets sauvegardés
+    </p>
+
+    {savedProjects.length === 0 ? (
+      <p className="tmu">Aucun projet sauvegardé.</p>
+    ) : (
+      <div className="sy">
+        {savedProjects.map((project) => (
+          <div key={project.id} className="grow">
+            <div>
+              <div className="tsm tbold">{project.name}</div>
+              <div className="tmu">
+                {new Date(project.savedAt).toLocaleString()}
+              </div>
+            </div>
+
+            <div className="fg">
+              <button
+                type="button"
+                className="btn-g"
+                style={{ minHeight: '40px', padding: '.45rem .65rem' }}
+                onClick={() => openSavedProject(project)}
+              >
+                Ouvrir
+              </button>
+
+              <button
+                type="button"
+                className="btn-d"
+                style={{ minHeight: '40px', padding: '.45rem .65rem' }}
+                onClick={() => deleteSavedProject(project.id)}
+              >
+                Supprimer
+              </button>
+            </div>
           </div>
-        )}
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
         {activeTab === 'bank' && (
           <div className="card mt3">
