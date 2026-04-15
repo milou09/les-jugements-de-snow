@@ -11,75 +11,125 @@ interface Glass {
 interface ZonePanelProps {
   zones: Zone[];
   glasses: Glass[];
-  selectedZoneId: number | null;
+  selectedZoneIds: number[];
   scale: number | null;
-  onSelectZone: (id: number) => void;
-  onDeleteZone: () => void;
-  onAssignGlass: (glassId: string) => void;
+  onToggleZone: (id: number) => void;
+  onClearSelection: () => void;
+  onDeleteSelectedZones: () => void;
+  onAssignGlassToSelected: (glassId: string) => void;
 }
 
 export default function ZonePanel({
   zones,
   glasses,
-  selectedZoneId,
+  selectedZoneIds,
   scale,
-  onSelectZone,
-  onDeleteZone,
-  onAssignGlass,
+  onToggleZone,
+  onClearSelection,
+  onDeleteSelectedZones,
+  onAssignGlassToSelected,
 }: ZonePanelProps) {
-  const selectedZone = zones.find(z => z.id === selectedZoneId) ?? null;
+  const selectedZones = zones.filter((z) => selectedZoneIds.includes(z.id));
+  const selectedZone = selectedZones[0] ?? null;
   const selectedGlass = selectedZone
-    ? glasses.find(g => g.id === selectedZone.glassId) ?? null
+    ? glasses.find((g) => g.id === selectedZone.glassId) ?? null
     : null;
 
   return (
     <>
-      {/* Zone list */}
       {zones.length > 0 && (
         <div className="card mt3 fi">
-          <p className="ctitle"><span>🍂</span>Zones — {zones.length}</p>
-          <div className="sys mt2">
-            {zones.map(zone => {
-              const zg = glasses.find(g => g.id === zone.glassId);
-              return (
-                <button
-                  key={zone.id}
-                  type="button"
-                  className={`zone-row${zone.id === selectedZoneId ? ' sel' : ''}`}
-                  onClick={() => onSelectZone(zone.id)}
-                >
-                  <div className="fg">
-                    <span
-                      className="cdot"
-                      style={{ backgroundColor: zg ? zg.couleur : 'rgba(139,105,20,.1)' }}
-                    />
-                    <div>
-                      <span className="tsm tbold" style={{ color:'#2d2416' }}>{zone.label}</span>
-                      {zg && (
-                        <p className="tmu" style={{ margin:0, fontSize:'.75rem' }}>{zg.nom}</p>
-                      )}
+          <p className="ctitle">
+            <span>🍂</span>Zones — {zones.length}
+          </p>
+
+          <details className="mt2" open>
+            <summary className="tsm" style={{ cursor: 'pointer' }}>
+              Liste des zones ({selectedZoneIds.length} sélectionnée(s))
+            </summary>
+            <div className="sys mt2">
+              {zones.map((zone) => {
+                const zg = glasses.find((g) => g.id === zone.glassId);
+                return (
+                  <label key={zone.id} className="grow" style={{ cursor: 'pointer' }}>
+                    <div className="fg">
+                      <input
+                        type="checkbox"
+                        checked={selectedZoneIds.includes(zone.id)}
+                        onChange={() => onToggleZone(zone.id)}
+                      />
+                      <span
+                        className="cdot"
+                        style={{ backgroundColor: zg ? zg.couleur : 'rgba(139,105,20,.1)' }}
+                      />
+                      <div>
+                        <span className="tsm tbold" style={{ color: '#2d2416' }}>
+                          {zone.label}
+                        </span>
+                        {zg && (
+                          <p className="tmu" style={{ margin: 0, fontSize: '.75rem' }}>
+                            {zg.nom}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <span className="tmu">{zone.area_px.toLocaleString()} px</span>
-                </button>
-              );
-            })}
+                    <span className="tmu">{zone.area_px.toLocaleString()} px</span>
+                  </label>
+                );
+              })}
+            </div>
+          </details>
+
+          <div className="mt3">
+            <span className="lbl">Attribuer un verre à la sélection</span>
+            <select
+              value=""
+              onChange={(e) => onAssignGlassToSelected(e.target.value)}
+              className="inp"
+              disabled={selectedZoneIds.length === 0}
+            >
+              <option value="">— Choisir un verre —</option>
+              {glasses.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.nom} — {g.prix_dm2.toFixed(2)} €/dm²
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="fl g2r mt3">
+            <button
+              type="button"
+              onClick={onClearSelection}
+              className="btn-w"
+              style={{ flex: 1 }}
+            >
+              Vider sélection
+            </button>
+            <button
+              type="button"
+              onClick={onDeleteSelectedZones}
+              className="btn-d"
+              style={{ flex: 1 }}
+              disabled={selectedZoneIds.length === 0}
+            >
+              Supprimer sélection
+            </button>
           </div>
         </div>
       )}
 
-      {/* Selected zone detail */}
       {selectedZone && (
         <div className="card mt3 fi">
-          <p className="ctitle"><span>✦</span>{selectedZone.label}</p>
+          <p className="ctitle">
+            <span>✦</span>Détail {selectedZone.label}
+          </p>
           <div className="sys tsm">
             <div className="fb">
               <span>Surface</span>
               <span>
                 {selectedZone.area_px.toLocaleString()} px
-                {selectedZone.area_cm2 !== null
-                  ? ` · ${selectedZone.area_cm2.toFixed(2)} cm²`
-                  : ''}
+                {selectedZone.area_cm2 !== null ? ` · ${selectedZone.area_cm2.toFixed(2)} cm²` : ''}
               </span>
             </div>
             <div className="fb">
@@ -95,38 +145,11 @@ export default function ZonePanel({
               <span className="tbold">{selectedZone.zone_cost.toFixed(2)} €</span>
             </div>
           </div>
-
-          {/* Assign glass */}
-          <div className="mt3">
-            <span className="lbl">Attribuer un verre</span>
-            <select
-              value={selectedZone.glassId ?? ''}
-              onChange={e => onAssignGlass(e.target.value)}
-              className="inp"
-            >
-              <option value="">— Choisir un verre —</option>
-              {glasses.map(g => (
-                <option key={g.id} value={g.id}>
-                  {g.nom} — {g.prix_dm2.toFixed(2)} €/dm²
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Delete */}
-          <div className="mt3">
-            <button type="button" onClick={onDeleteZone} className="btn-d">
-              Supprimer la zone
-            </button>
-          </div>
         </div>
       )}
 
-      {/* No scale warning */}
       {zones.length > 0 && !scale && (
-        <div className="warn mt3">
-          ⚠ Aucune échelle — les coûts ne peuvent pas être calculés.
-        </div>
+        <div className="warn mt3">⚠ Aucune échelle — les coûts ne peuvent pas être calculés.</div>
       )}
     </>
   );

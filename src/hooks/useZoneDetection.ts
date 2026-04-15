@@ -19,6 +19,7 @@ export interface Zone {
   color: RgbaColor | null;
   glassId: number | null;
   zone_cost: number;
+  center: { x: number; y: number };
 }
 
 const isDark = (r: number, g: number, b: number) =>
@@ -64,10 +65,14 @@ export function detectZone(
 
   const pixelSet = new Set(pixelArray);
   let perimeterPx = 0;
+  let sumX = 0;
+  let sumY = 0;
 
   for (const pi of pixelArray) {
     const x = pi % width;
     const y = Math.floor(pi / width);
+    sumX += x;
+    sumY += y;
     for (const [nx, ny] of [[x+1,y],[x-1,y],[x,y+1],[x,y-1]] as [number,number][]) {
       if (nx < 0 || ny < 0 || nx >= width || ny >= height) { perimeterPx++; continue; }
       if (!pixelSet.has(ny * width + nx)) perimeterPx++;
@@ -89,5 +94,9 @@ export function detectZone(
     color: null,
     glassId: null,
     zone_cost: 0,
+    center: {
+      x: sumX / pixelArray.length,
+      y: sumY / pixelArray.length,
+    },
   };
 }

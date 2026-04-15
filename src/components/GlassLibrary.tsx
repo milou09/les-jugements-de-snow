@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 export interface Glass {
   id: number;
@@ -10,7 +10,7 @@ export interface Glass {
 
 function hexToRgba(hex: string) {
   const c = hex.replace('#', '');
-  const f = c.length === 3 ? c.split('').map(x => x + x).join('') : c.padEnd(6, '0');
+  const f = c.length === 3 ? c.split('').map((x) => x + x).join('') : c.padEnd(6, '0');
   return {
     r: parseInt(f.slice(0, 2), 16),
     g: parseInt(f.slice(2, 4), 16),
@@ -39,15 +39,33 @@ export function normalizeGlass(g: Partial<Glass> & Record<string, unknown>): Gla
 }
 
 interface GlassLibraryProps {
+  title: string;
   glasses: Glass[];
-  onAdd: (glass: Glass) => void;
-  onDelete: (id: number) => void;
+  emptyLabel?: string;
+  onAdd?: (glass: Glass) => void;
+  onDelete?: (id: number) => void;
+  onAssignToProject?: (id: number) => void;
 }
 
-export default function GlassLibrary({ glasses, onAdd, onDelete }: GlassLibraryProps) {
+export default function GlassLibrary({
+  title,
+  glasses,
+  emptyLabel = 'Aucun verre enregistré.',
+  onAdd,
+  onDelete,
+  onAssignToProject,
+}: GlassLibraryProps) {
   const [form, setForm] = useState({ nom: '', prix_dm2: '', couleur: '#7dd3fc' });
+  const [query, setQuery] = useState('');
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return glasses;
+    return glasses.filter((g) => g.nom.toLowerCase().includes(q));
+  }, [glasses, query]);
 
   const handleAdd = () => {
+    if (!onAdd) return;
     const nom = form.nom.trim();
     const prix = toSafeNumber(form.prix_dm2, NaN);
     if (!nom || !isFinite(prix) || prix < 0) return;
@@ -63,47 +81,57 @@ export default function GlassLibrary({ glasses, onAdd, onDelete }: GlassLibraryP
   };
 
   return (
-    <div className="card mt3" style={{ marginBottom: '2rem' }}>
-      <p className="ctitle"><span>🪟</span>Bibliothèque de verres</p>
+    <div className="card mt3" style={{ marginBottom: '1rem' }}>
+      <p className="ctitle">
+        <span>🪟</span>{title}
+      </p>
 
-      {/* Form */}
-      <div className="sy mt2">
-        <input
-          type="text"
-          value={form.nom}
-          onChange={e => setForm(p => ({ ...p, nom: e.target.value }))}
-          className="inp"
-          placeholder="Nom du verre"
-        />
-        <input
-          type="number"
-          inputMode="decimal"
-          step="0.01"
-          min="0"
-          value={form.prix_dm2}
-          onChange={e => setForm(p => ({ ...p, prix_dm2: e.target.value }))}
-          className="inp"
-          placeholder="Prix au dm² (€)"
-        />
-        <div className="cpick">
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="inp mt2"
+        placeholder="Rechercher un verre"
+      />
+
+      {onAdd && (
+        <div className="sy mt3">
           <input
-            type="color"
-            value={form.couleur}
-            onChange={e => setForm(p => ({ ...p, couleur: e.target.value }))}
+            type="text"
+            value={form.nom}
+            onChange={(e) => setForm((p) => ({ ...p, nom: e.target.value }))}
+            className="inp"
+            placeholder="Nom du verre"
           />
-          <span className="tmu">{form.couleur}</span>
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            value={form.prix_dm2}
+            onChange={(e) => setForm((p) => ({ ...p, prix_dm2: e.target.value }))}
+            className="inp"
+            placeholder="Prix au dm² (€)"
+          />
+          <div className="cpick">
+            <input
+              type="color"
+              value={form.couleur}
+              onChange={(e) => setForm((p) => ({ ...p, couleur: e.target.value }))}
+            />
+            <span className="tmu">{form.couleur}</span>
+          </div>
+          <button type="button" onClick={handleAdd} className="btn-g wfull">
+            Ajouter un verre
+          </button>
         </div>
-        <button type="button" onClick={handleAdd} className="btn-g wfull">
-          Ajouter un verre
-        </button>
-      </div>
+      )}
 
-      {/* List */}
       <div className="sys mt4">
-        {glasses.length === 0 ? (
-          <p className="tmu">Aucun verre enregistré.</p>
+        {filtered.length === 0 ? (
+          <p className="tmu">{emptyLabel}</p>
         ) : (
-          glasses.map(g => (
+          filtered.map((g) => (
             <div key={g.id} className="grow">
               <div className="fg">
                 <span
@@ -119,9 +147,18 @@ export default function GlassLibrary({ glasses, onAdd, onDelete }: GlassLibraryP
                   </p>
                 </div>
               </div>
-              <button type="button" onClick={() => onDelete(g.id)} className="btn-d">
-                Retirer
-              </button>
+              <div className="fg">
+                {onAssignToProject && (
+                  <button type="button" onClick={() => onAssignToProject(g.id)} className="btn-g">
+                    + Projet
+                  </button>
+                )}
+                {onDelete && (
+                  <button type="button" onClick={() => onDelete(g.id)} className="btn-d">
+                    Retirer
+                  </button>
+                )}
+              </div>
             </div>
           ))
         )}
