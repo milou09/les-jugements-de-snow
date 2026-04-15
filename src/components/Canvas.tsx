@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { LeafBranch } from './svg/Illustrations';
-import { useZoom } from '../hooks/useZoom';
 import type { Zone } from '../hooks/useZoneDetection';
 
 interface CanvasProps {
@@ -9,7 +8,8 @@ interface CanvasProps {
   canvasSize: { width: number; height: number };
   baseImageData: ImageData | null;
   zones: Zone[];
-  selectedZoneId: number | null;
+  selectedZoneIds: number[];
+  showZoneNumbers: boolean;
   scaleLine: { x1: number; y1: number; x2: number; y2: number } | null;
   mode: 'zone' | 'scale';
   zoomLevel: number;
@@ -30,7 +30,8 @@ export default function Canvas({
   canvasSize,
   baseImageData,
   zones,
-  selectedZoneId,
+  selectedZoneIds,
+  showZoneNumbers,
   scaleLine,
   mode,
   zoomLevel,
@@ -44,8 +45,6 @@ export default function Canvas({
   canvasRef,
   canvasWrapRef,
 }: CanvasProps) {
-
-  // Draw image + overlays
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !baseImageData) return;
@@ -60,19 +59,41 @@ export default function Canvas({
         for (const pi of zone.pixelArray) {
           const off = pi * 4;
           if (zone.color) {
-            d[off]   = zone.color.r;
-            d[off+1] = zone.color.g;
-            d[off+2] = zone.color.b;
-            d[off+3] = Math.round(zone.color.a * 255);
+            d[off] = zone.color.r;
+            d[off + 1] = zone.color.g;
+            d[off + 2] = zone.color.b;
+            d[off + 3] = Math.round(zone.color.a * 255);
           }
-          if (zone.id === selectedZoneId) {
-            d[off]   = Math.round(d[off]   * 0.75 + 16  * 0.25);
-            d[off+1] = Math.round(d[off+1] * 0.75 + 185 * 0.25);
-            d[off+2] = Math.round(d[off+2] * 0.75 + 129 * 0.25);
+          if (selectedZoneIds.includes(zone.id)) {
+            d[off] = Math.round(d[off] * 0.7 + 16 * 0.3);
+            d[off + 1] = Math.round(d[off + 1] * 0.7 + 185 * 0.3);
+            d[off + 2] = Math.round(d[off + 2] * 0.7 + 129 * 0.3);
           }
         }
       }
       ctx.putImageData(ov, 0, 0);
+
+      if (showZoneNumbers) {
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 14px Lora, serif';
+        for (const zone of zones) {
+          const label = zone.label.replace('Zone ', '');
+          const x = zone.center?.x ?? 0;
+          const y = zone.center?.y ?? 0;
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.beginPath();
+          ctx.arc(x, y, 11, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(45,36,22,0.6)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.fillStyle = '#2d2416';
+          ctx.fillText(label, x, y + 0.5);
+        }
+        ctx.restore();
+      }
     }
 
     if (scaleLine) {
@@ -83,7 +104,10 @@ export default function Canvas({
       ctx.moveTo(scaleLine.x1, scaleLine.y1);
       ctx.lineTo(scaleLine.x2, scaleLine.y2);
       ctx.stroke();
-      for (const [x, y] of [[scaleLine.x1, scaleLine.y1], [scaleLine.x2, scaleLine.y2]] as [number,number][]) {
+      for (const [x, y] of [
+        [scaleLine.x1, scaleLine.y1],
+        [scaleLine.x2, scaleLine.y2],
+      ] as [number, number][]) {
         ctx.fillStyle = '#5c7a3e';
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, Math.PI * 2);
@@ -91,11 +115,12 @@ export default function Canvas({
       }
       ctx.restore();
     }
-  }, [baseImageData, zones, scaleLine, selectedZoneId, canvasRef]);
+  }, [baseImageData, zones, scaleLine, selectedZoneIds, showZoneNumbers, canvasRef]);
 
-  useEffect(() => { redraw(); }, [redraw]);
+  useEffect(() => {
+    redraw();
+  }, [redraw]);
 
-  // Init canvas size when image loads
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !imageElement || !canvasSize.width) return;
@@ -113,11 +138,11 @@ export default function Canvas({
           <div
             ref={canvasWrapRef}
             className="cwrap"
-            onTouchStart={e => {
+            onTouchStart={(e) => {
               const rect = canvasWrapRef.current?.getBoundingClientRect();
               if (rect) onWrapTouchStart(e, rect);
             }}
-            onTouchMove={e => {
+            onTouchMove={(e) => {
               const rect = canvasWrapRef.current?.getBoundingClientRect();
               if (rect) onWrapTouchMove(e, rect);
             }}
@@ -148,7 +173,7 @@ export default function Canvas({
         </>
       ) : (
         <div className="ec">
-          <LeafBranch style={{ width: '6rem', opacity: .4 }}/>
+          <LeafBranch style={{ width: '6rem', opacity: 0.4 }} />
           <span>Importe le patron de ton vitrail</span>
         </div>
       )}
