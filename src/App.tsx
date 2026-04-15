@@ -246,6 +246,9 @@ export default function App() {
   const [resultCompliment, setResultCompliment] = useState('');
   const [resultMood, setResultMood] = useState<SnowMood | null>(null);
   const [resultIsRoast, setResultIsRoast] = useState(false);
+  const [activeTab, setActiveTab] = useState<'current' | 'saved' | 'bank'>(
+    'current'
+  );
 
   const {
     zoomLevel,
@@ -617,8 +620,39 @@ export default function App() {
             <p className="hdr-eye">Atelier Vitrail</p>
             <h1 className="hdr-title">Calculateur Tiffany</h1>
           </div>
+          <div
+            className="mt2"
+            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '.45rem' }}
+          >
+            <button
+              type="button"
+              className={activeTab === 'current' ? 'btn-g' : 'btn-w'}
+              style={{ minHeight: '40px', padding: '.45rem .5rem', fontSize: '.75rem' }}
+              onClick={() => setActiveTab('current')}
+            >
+              Projet en cours
+            </button>
+            <button
+              type="button"
+              className={activeTab === 'saved' ? 'btn-g' : 'btn-w'}
+              style={{ minHeight: '40px', padding: '.45rem .5rem', fontSize: '.75rem' }}
+              onClick={() => setActiveTab('saved')}
+            >
+              Projets sauvegardés
+            </button>
+            <button
+              type="button"
+              className={activeTab === 'bank' ? 'btn-g' : 'btn-w'}
+              style={{ minHeight: '40px', padding: '.45rem .5rem', fontSize: '.75rem' }}
+              onClick={() => setActiveTab('bank')}
+            >
+              Banque de verre
+            </button>
+          </div>
         </div>
 
+        {activeTab === 'current' && (
+          <>
         {/* Action buttons */}
         <div className="g2 mt3">
           <button type="button" onClick={reset} className="btn-w">
@@ -933,6 +967,26 @@ export default function App() {
             );
           }}
         />
+          </>
+        )}
+
+        {activeTab === 'saved' && (
+          <div className="card mt3">
+            <p className="ctitle">
+              <span>🗂️</span>Projets sauvegardés
+            </p>
+            <p className="tmu">Cette section arrive bientôt.</p>
+          </div>
+        )}
+
+        {activeTab === 'bank' && (
+          <div className="card mt3">
+            <p className="ctitle">
+              <span>🧪</span>Banque de verre
+            </p>
+            <p className="tmu">Cette section arrive bientôt.</p>
+          </div>
+        )}
 
         {/* Footer */}
         <div style={{ textAlign: 'center', opacity: 0.28, marginTop: '1rem' }}>
