@@ -17,6 +17,43 @@ import {
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 const MAX_WIDTH = 1000;
 const GLASS_STORAGE_KEY = 'vitrail_tiffany_glasses_v2';
+const PROJECTS_STORAGE_KEY = 'vitrail_tiffany_projects_v1';
+
+type SavedProjectState = {
+  imageSrc: string | null;
+  zones: Zone[];
+  scale: number | null;
+  scaleLine: { x1: number; y1: number; x2: number; y2: number } | null;
+  glasses: Glass[];
+  copperPricePerMeter: string;
+  solderPricePerMeter: string;
+  laborHours: string;
+  laborRate: string;
+  pricingMode: string;
+  customFormula: string;
+};
+
+type SavedProject = {
+  id: string;
+  name: string;
+  savedAt: string;
+  state: SavedProjectState;
+};
+
+function loadSavedProjects(): SavedProject[] {
+  try {
+    const s = localStorage.getItem(PROJECTS_STORAGE_KEY);
+    if (!s) return [];
+    const p = JSON.parse(s);
+    return Array.isArray(p) ? p : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSavedProjects(projects: SavedProject[]) {
+  localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+}
 
 function toSafeNumber(v: unknown, fb = 0): number {
   const n = parseFloat(String(v ?? '').replace(',', '.'));
@@ -246,6 +283,10 @@ export default function App() {
   const [resultCompliment, setResultCompliment] = useState('');
   const [resultMood, setResultMood] = useState<SnowMood | null>(null);
   const [resultIsRoast, setResultIsRoast] = useState(false);
+  const [activeTab, setActiveTab] = useState<'current' | 'saved' | 'bank'>(
+    'current'
+  );
+  const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
 
   const {
     zoomLevel,
@@ -296,7 +337,9 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(GLASS_STORAGE_KEY, JSON.stringify(glasses));
   }, [glasses]);
-
+  useEffect(() => {
+    setSavedProjects(loadSavedProjects());
+  }, []);
   // ── Load image ──
   useEffect(() => {
     if (!imageSrc) {
@@ -313,13 +356,6 @@ export default function App() {
         width: Math.round(img.width * ratio),
         height: Math.round(img.height * ratio),
       });
-      setZones([]);
-      setSelectedZoneId(null);
-      setScaleLine(null);
-      setPendingScalePixels(null);
-      setScaleInputCm('');
-      setShowResult(false);
-      zoneCounterRef.current = 0;
     };
     img.src = imageSrc;
   }, [imageSrc]);
@@ -368,11 +404,91 @@ export default function App() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setZones([]);
+    setSelectedZoneId(null);
+    setScaleLine(null);
+    setPendingScalePixels(null);
+    setScaleInputCm('');
+    setShowResult(false);
+    zoneCounterRef.current = 0;
     const reader = new FileReader();
     reader.onload = () => {
       setImageSrc(reader.result as string);
     };
     reader.readAsDataURL(file);
+  };
+
+  const collectCurrentProjectState = (): SavedProjectState => ({
+    imageSrc,
+    zones,
+    scale,
+    scaleLine,
+    glasses,
+    copperPricePerMeter,
+    solderPricePerMeter,
+    laborHours,
+    laborRate,
+    pricingMode,
+    customFormula,
+  });
+
+  const applyProjectState = (state: SavedProjectState) => {
+    setMode('zone');
+    setSelectedZoneId(null);
+    setPendingScalePixels(null);
+    setScaleInputCm('');
+    setShowResult(false);
+    setZones(state.zones || []);
+    setScale(state.scale ?? null);
+    setScaleLine(state.scaleLine ?? null);
+    setGlasses((state.glasses || []).map(normalizeGlass).filter(Boolean) as Glass[]);
+    setCopperPricePerMeter(state.copperPricePerMeter ?? '');
+    setSolderPricePerMeter(state.solderPricePerMeter ?? '');
+    setLaborHours(state.laborHours ?? '');
+    setLaborRate(state.laborRate ?? '');
+    setPricingMode(state.pricingMode ?? 'x2_materiaux');
+    setCustomFormula(state.customFormula ?? '(cost_total * 2.5) + 20');
+    zoneCounterRef.current = (state.zones || []).reduce(
+      (m, z) => Math.max(m, z.id || 0),
+      0
+    );
+    if (state.imageSrc) {
+      setImageSrc(state.imageSrc);
+    } else {
+      setImageSrc(null);
+      setImageElement(null);
+      setCanvasSize({ width: 0, height: 0 });
+      setBaseImageData(null);
+    }
+  };
+
+  const saveProject = () => {
+    const name = prompt('Nom du projet à sauvegarder ?');
+    if (!name || !name.trim()) return;
+    const project: SavedProject = {
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      name: name.trim(),
+      savedAt: new Date().toISOString(),
+      state: collectCurrentProjectState(),
+    };
+    setSavedProjects((p) => {
+      const next = [project, ...p];
+      saveSavedProjects(next);
+      return next;
+    });
+  };
+
+  const openSavedProject = (project: SavedProject) => {
+    applyProjectState(project.state);
+    setActiveTab('current');
+  };
+
+  const deleteSavedProject = (id: string) => {
+    setSavedProjects((p) => {
+      const next = p.filter((sp) => sp.id !== id);
+      saveSavedProjects(next);
+      return next;
+    });
   };
 
   // ── Pointer coords ──
@@ -617,8 +733,39 @@ export default function App() {
             <p className="hdr-eye">Atelier Vitrail</p>
             <h1 className="hdr-title">Calculateur Tiffany</h1>
           </div>
+          <div
+            className="mt2"
+            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '.45rem' }}
+          >
+            <button
+              type="button"
+              className={activeTab === 'current' ? 'btn-g' : 'btn-w'}
+              style={{ minHeight: '40px', padding: '.45rem .5rem', fontSize: '.75rem' }}
+              onClick={() => setActiveTab('current')}
+            >
+              Projet en cours
+            </button>
+            <button
+              type="button"
+              className={activeTab === 'saved' ? 'btn-g' : 'btn-w'}
+              style={{ minHeight: '40px', padding: '.45rem .5rem', fontSize: '.75rem' }}
+              onClick={() => setActiveTab('saved')}
+            >
+              Projets sauvegardés
+            </button>
+            <button
+              type="button"
+              className={activeTab === 'bank' ? 'btn-g' : 'btn-w'}
+              style={{ minHeight: '40px', padding: '.45rem .5rem', fontSize: '.75rem' }}
+              onClick={() => setActiveTab('bank')}
+            >
+              Banque de verre
+            </button>
+          </div>
         </div>
 
+        {activeTab === 'current' && (
+          <>
         {/* Action buttons */}
         <div className="g2 mt3">
           <button type="button" onClick={reset} className="btn-w">
@@ -632,6 +779,9 @@ export default function App() {
             {mode === 'scale' ? '→ Zones' : '⟷ Échelle'}
           </button>
         </div>
+        <button type="button" onClick={saveProject} className="btn-g wfull mt2">
+          Sauvegarder ce projet
+        </button>
 
         {/* Image import */}
         <div className="card mt4">
@@ -933,6 +1083,59 @@ export default function App() {
             );
           }}
         />
+          </>
+        )}
+
+        {activeTab === 'saved' && (
+          <div className="card mt3">
+            <p className="ctitle">
+              <span>🗂️</span>Projets sauvegardés
+            </p>
+            {savedProjects.length === 0 ? (
+              <p className="tmu">Aucun projet sauvegardé.</p>
+            ) : (
+              <div className="sy">
+                {savedProjects.map((project) => (
+                  <div key={project.id} className="grow">
+                    <div>
+                      <div className="tsm tbold">{project.name}</div>
+                      <div className="tmu">
+                        {new Date(project.savedAt).toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="fg">
+                      <button
+                        type="button"
+                        className="btn-g"
+                        style={{ minHeight: '40px', padding: '.45rem .65rem' }}
+                        onClick={() => openSavedProject(project)}
+                      >
+                        Ouvrir
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-d"
+                        style={{ minHeight: '40px', padding: '.45rem .65rem' }}
+                        onClick={() => deleteSavedProject(project.id)}
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'bank' && (
+          <div className="card mt3">
+            <p className="ctitle">
+              <span>🧪</span>Banque de verre
+            </p>
+            <p className="tmu">Cette section arrive bientôt.</p>
+          </div>
+        )}
 
         {/* Footer */}
         <div style={{ textAlign: 'center', opacity: 0.28, marginTop: '1rem' }}>
