@@ -265,7 +265,7 @@ export default function App() {
   const [scaleStart, setScaleStart] = useState<{ x: number; y: number } | null>(
     null
   );
-  const [selectedZoneId, setSelectedZoneId] = useState<number | null>(null);
+  const [selectedZoneIds, setSelectedZoneIds] = useState<number[]>([]);
   const [pendingScalePixels, setPendingScalePixels] = useState<number | null>(
     null
   );
@@ -516,13 +516,17 @@ const deleteSavedProject = (id: string) => {
       const ci = y * baseImageData.width + x;
       const existing = zones.find((z) => z.pixelSet.has(ci));
       if (existing) {
-        setSelectedZoneId((p) => (p === existing.id ? null : existing.id));
+        setSelectedZoneIds((prev) =>
+  prev.includes(existing.id)
+    ? prev.filter((z) => z !== existing.id)
+    : [...prev, existing.id]
+);
         return;
       }
       const zone = detectZone(x, y, baseImageData, scale, zoneCounterRef);
       if (!zone) return;
       setZones((p) => [...p, zone]);
-      setSelectedZoneId(zone.id);
+      setSelectedZoneIds([zone.id]);
     },
     [baseImageData, mode, zones, scale, getXY]
   );
@@ -571,21 +575,26 @@ const deleteSavedProject = (id: string) => {
   };
 
   // ── Zone actions ──
-  const handleSelectZone = (id: number) =>
-    setSelectedZoneId((p) => (p === id ? null : id));
+const handleSelectZone = (id: number) => {
+  setSelectedZoneIds((prev) =>
+    prev.includes(id)
+      ? prev.filter((z) => z !== id)
+      : [...prev, id]
+  );
+};
 
   const handleDeleteZone = () => {
-    if (!selectedZoneId) return;
-    setZones((p) => p.filter((z) => z.id !== selectedZoneId));
-    setSelectedZoneId(null);
+  if (selectedZoneIds.length === 0) return;
+setZones((p) => p.filter((z) => !selectedZoneIds.includes(z.id)));
+setSelectedZoneIds([]);
   };
 
   const handleAssignGlass = (glassId: string) => {
     const gl = glasses.find((g) => g.id === Number(glassId));
-    if (!gl || !selectedZoneId) return;
+  if (!gl || selectedZoneIds.length === 0) return;
     setZones((p) =>
       p.map((z) => {
-        if (z.id !== selectedZoneId) return z;
+        if (!selectedZoneIds.includes(z.id)) return z;
         const a = z.area_cm2 ?? 0;
         const p2 = gl.prix_dm2 / 100;
         return {
