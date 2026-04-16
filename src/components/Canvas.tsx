@@ -81,16 +81,23 @@ export default function Canvas({
       if (showZoneNumbers) {
   ctx.save();
   ctx.fillStyle = '#2d2416';
-  ctx.font = 'bold 14px serif';
+  ctx.font = 'bold 20px serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   for (const zone of zones) {
     if (!zone.pixelArray || zone.pixelArray.length === 0) continue;
 
-    const centerIndex = zone.pixelArray[Math.floor(zone.pixelArray.length / 2)];
-    const x = centerIndex % canvas.width;
-    const y = Math.floor(centerIndex / canvas.width);
+    let sumX = 0;
+let sumY = 0;
+
+for (const pi of zone.pixelArray) {
+  sumX += pi % canvas.width;
+  sumY += Math.floor(pi / canvas.width);
+}
+
+const x = sumX / zone.pixelArray.length;
+const y = sumY / zone.pixelArray.length;
 
     ctx.fillText(zone.label.replace(/\D+/g, '') || String(zone.id), x, y);
   }
