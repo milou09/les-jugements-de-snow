@@ -11,7 +11,7 @@ interface Glass {
 interface ZonePanelProps {
   zones: Zone[];
   glasses: Glass[];
-  selectedZoneId: number | null;
+  selectedZoneIds: number[];
   scale: number | null;
   onSelectZone: (id: number) => void;
   onDeleteZone: () => void;
@@ -21,13 +21,15 @@ interface ZonePanelProps {
 export default function ZonePanel({
   zones,
   glasses,
-  selectedZoneId,
+  selectedZoneIds,
   scale,
   onSelectZone,
   onDeleteZone,
   onAssignGlass,
 }: ZonePanelProps) {
-  const selectedZone = zones.find(z => z.id === selectedZoneId) ?? null;
+
+  const selectedZone = zones.find(z => selectedZoneIds.includes(z.id)) ?? null;
+
   const selectedGlass = selectedZone
     ? glasses.find(g => g.id === selectedZone.glassId) ?? null
     : null;
@@ -45,7 +47,7 @@ export default function ZonePanel({
                 <button
                   key={zone.id}
                   type="button"
-                  className={`zone-row${zone.id === selectedZoneId ? ' sel' : ''}`}
+                  className={`zone-row${selectedZoneIds.includes(zone.id) ? ' sel' : ''}`}
                   onClick={() => onSelectZone(zone.id)}
                 >
                   <div className="fg">
@@ -68,7 +70,7 @@ export default function ZonePanel({
         </div>
       )}
 
-      {/* Selected zone detail */}
+      {/* Selected zone detail (on garde une seule pour l’UI) */}
       {selectedZone && (
         <div className="card mt3 fi">
           <p className="ctitle"><span>✦</span>{selectedZone.label}</p>
