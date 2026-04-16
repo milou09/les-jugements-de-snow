@@ -812,7 +812,7 @@ setSelectedZoneIds([]);
           canvasSize={canvasSize}
           baseImageData={baseImageData}
           zones={zones}
-          selectedZoneId={selectedZoneIds[0] ?? null}
+          selectedZoneIds={selectedZoneIds}
           scaleLine={scaleLine}
           mode={mode}
           zoomLevel={zoomLevel}
