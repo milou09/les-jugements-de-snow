@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { LeafBranch } from './svg/Illustrations';
-import { useZoom } from '../hooks/useZoom';
 import type { Zone } from '../hooks/useZoneDetection';
 
 interface CanvasProps {
@@ -9,7 +8,7 @@ interface CanvasProps {
   canvasSize: { width: number; height: number };
   baseImageData: ImageData | null;
   zones: Zone[];
-  selectedZoneId: number | null;
+  selectedZoneIds: number[];
   scaleLine: { x1: number; y1: number; x2: number; y2: number } | null;
   mode: 'zone' | 'scale';
   zoomLevel: number;
@@ -30,7 +29,7 @@ export default function Canvas({
   canvasSize,
   baseImageData,
   zones,
-  selectedZoneId,
+  selectedZoneIds,
   scaleLine,
   mode,
   zoomLevel,
@@ -45,33 +44,37 @@ export default function Canvas({
   canvasWrapRef,
 }: CanvasProps) {
 
-  // Draw image + overlays
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !baseImageData) return;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
+
     ctx.putImageData(baseImageData, 0, 0);
 
     if (zones.length > 0) {
       const ov = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const d = ov.data;
+
       for (const zone of zones) {
         for (const pi of zone.pixelArray) {
           const off = pi * 4;
+
           if (zone.color) {
             d[off]   = zone.color.r;
             d[off+1] = zone.color.g;
             d[off+2] = zone.color.b;
             d[off+3] = Math.round(zone.color.a * 255);
           }
-          if (zone.id === selectedZoneId) {
+
+          if (selectedZoneIds.includes(zone.id)) {
             d[off]   = Math.round(d[off]   * 0.75 + 16  * 0.25);
             d[off+1] = Math.round(d[off+1] * 0.75 + 185 * 0.25);
             d[off+2] = Math.round(d[off+2] * 0.75 + 129 * 0.25);
           }
         }
       }
+
       ctx.putImageData(ov, 0, 0);
     }
 
@@ -83,26 +86,30 @@ export default function Canvas({
       ctx.moveTo(scaleLine.x1, scaleLine.y1);
       ctx.lineTo(scaleLine.x2, scaleLine.y2);
       ctx.stroke();
-      for (const [x, y] of [[scaleLine.x1, scaleLine.y1], [scaleLine.x2, scaleLine.y2]] as [number,number][]) {
+
+      for (const [x, y] of [[scaleLine.x1, scaleLine.y1], [scaleLine.x2, scaleLine.y2]] as [number, number][]) {
         ctx.fillStyle = '#5c7a3e';
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, Math.PI * 2);
         ctx.fill();
       }
+
       ctx.restore();
     }
-  }, [baseImageData, zones, scaleLine, selectedZoneId, canvasRef]);
+  }, [baseImageData, zones, scaleLine, selectedZoneIds, canvasRef]);
 
   useEffect(() => { redraw(); }, [redraw]);
 
-  // Init canvas size when image loads
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !imageElement || !canvasSize.width) return;
+
     canvas.width = canvasSize.width;
     canvas.height = canvasSize.height;
+
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
+
     ctx.drawImage(imageElement, 0, 0, canvasSize.width, canvasSize.height);
   }, [imageElement, canvasSize, canvasRef]);
 
@@ -138,6 +145,7 @@ export default function Canvas({
               <div className="zoom-badge">×{zoomLevel.toFixed(1)}</div>
             )}
           </div>
+
           <p className="tmu mt2" style={{ textAlign: 'center' }}>
             {mode === 'scale'
               ? '✏️ Trace une ligne de référence'
