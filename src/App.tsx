@@ -1004,29 +1004,30 @@ setSelectedZoneIds([]);
         </div>
       )}
 
-      <div className="canvas-panel mt3">
-  <div className="card">
-        <Canvas
-          imageSrc={imageSrc}
-          imageElement={imageElement}
-          canvasSize={canvasSize}
-          showZoneNumbers={showZoneNumbers}
-          baseImageData={baseImageData}
-          zones={zones}
-          selectedZoneIds={selectedZoneIds}
-          scaleLine={scaleLine}
-          mode={mode}
-          zoomLevel={zoomLevel}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onWrapTouchStart={onWrapTouchStart}
-          onWrapTouchMove={onWrapTouchMove}
-          onWrapTouchEnd={onWrapTouchEnd}
-          onDoubleTap={onDoubleTap}
-          canvasRef={canvasRef}
-          canvasWrapRef={canvasWrapRef}
-        />
+           <div className="canvas-panel mt3">
+        <div className="card">
+          <Canvas
+            imageSrc={imageSrc}
+            imageElement={imageElement}
+            canvasSize={canvasSize}
+            showZoneNumbers={showZoneNumbers}
+            baseImageData={baseImageData}
+            zones={zones}
+            selectedZoneIds={selectedZoneIds}
+            scaleLine={scaleLine}
+            mode={mode}
+            zoomLevel={zoomLevel}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onWrapTouchStart={onWrapTouchStart}
+            onWrapTouchMove={onWrapTouchMove}
+            onWrapTouchEnd={onWrapTouchEnd}
+            onDoubleTap={onDoubleTap}
+            canvasRef={canvasRef}
+            canvasWrapRef={canvasWrapRef}
+          />
+        </div>
       </div>
     </div>
 
