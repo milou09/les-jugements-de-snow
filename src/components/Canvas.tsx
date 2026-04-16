@@ -3,6 +3,7 @@ import { LeafBranch } from './svg/Illustrations';
 import type { Zone } from '../hooks/useZoneDetection';
 
 interface CanvasProps {
+  showZoneNumbers: boolean;
   imageSrc: string | null;
   imageElement: HTMLImageElement | null;
   canvasSize: { width: number; height: number };
@@ -24,6 +25,7 @@ interface CanvasProps {
 }
 
 export default function Canvas({
+  showZoneNumbers,
   imageSrc,
   imageElement,
   canvasSize,
@@ -75,6 +77,25 @@ export default function Canvas({
         }
       }
 
+      if (showZoneNumbers) {
+  ctx.save();
+  ctx.fillStyle = '#2d2416';
+  ctx.font = 'bold 14px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  for (const zone of zones) {
+    if (!zone.pixelArray || zone.pixelArray.length === 0) continue;
+
+    const centerIndex = zone.pixelArray[Math.floor(zone.pixelArray.length / 2)];
+    const x = centerIndex % canvas.width;
+    const y = Math.floor(centerIndex / canvas.width);
+
+    ctx.fillText(String(zone.id), x, y);
+  }
+
+  ctx.restore();
+}
       ctx.putImageData(ov, 0, 0);
     }
 
