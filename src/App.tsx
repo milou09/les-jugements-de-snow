@@ -526,7 +526,7 @@ const deleteSavedProject = (id: string) => {
       const zone = detectZone(x, y, baseImageData, scale, zoneCounterRef);
       if (!zone) return;
       setZones((p) => [...p, zone]);
-      setSelectedZoneIds([zone.id]);
+      setSelectedZoneIds((prev) => [...prev, zone.id]);
     },
     [baseImageData, mode, zones, scale, getXY]
   );
