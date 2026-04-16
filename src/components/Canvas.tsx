@@ -77,6 +77,7 @@ export default function Canvas({
         }
       }
 
+      ctx.putImageData(ov, 0, 0);
       if (showZoneNumbers) {
   ctx.save();
   ctx.fillStyle = '#2d2416';
@@ -96,7 +97,6 @@ export default function Canvas({
 
   ctx.restore();
 }
-      ctx.putImageData(ov, 0, 0);
     }
 
     if (scaleLine) {
