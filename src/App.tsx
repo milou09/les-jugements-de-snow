@@ -186,6 +186,34 @@ input[type=file]::file-selector-button{background:linear-gradient(135deg,rgba(12
 .bottom-spacer{height:max(2rem,env(safe-area-inset-bottom));}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 .fi{animation:fadeIn .3s ease forwards;}
+.app-shell{
+  max-width:1500px;
+  margin:0 auto;
+  padding:1.25rem 1.25rem 0;
+  position:relative;
+  z-index:1;
+}
+.tabs-row{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:.6rem;
+}
+.current-layout{display:block;}
+.left-col,.right-col{display:block;}
+
+@media (min-width:1100px){
+  .current-layout{
+    display:grid;
+    grid-template-columns:minmax(0,2fr) minmax(380px,460px);
+    gap:1rem;
+    align-items:start;
+  }
+
+  .right-col{
+    position:sticky;
+    top:1rem;
+  }
+}
 `;
 
 /* ─── Parchment background ────────────────────────────────────────────────── */
@@ -305,7 +333,7 @@ export default function App() {
       document.head.appendChild(vp);
     }
     (vp as HTMLMetaElement).content =
-      'width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover';
+  'width=device-width,initial-scale=1';
     const tags = [
       { name: 'apple-mobile-web-app-capable', content: 'yes' },
       { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
@@ -708,14 +736,7 @@ setSelectedZoneIds([]);
         {CSS}
       </style>
       <ParchmentBg />
-      <div
-        style={{
-          maxWidth: '28rem',
-          margin: '0 auto',
-          padding: '1rem 1rem 0',
-          position: 'relative',
-          zIndex: 1,
-        }}
+      <div className="app-shell">
       >
         {/* Header */}
         <div className="hdr-wrap" style={{ paddingTop: '.75rem' }}>
@@ -742,10 +763,7 @@ setSelectedZoneIds([]);
             <p className="hdr-eye">Atelier Vitrail</p>
             <h1 className="hdr-title">Calculateur Tiffany</h1>
           </div>
-          <div
-            className="mt2"
-            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '.45rem' }}
-          >
+          <div className="mt2 tabs-row">
             <button
               type="button"
               className={activeTab === 'current' ? 'btn-g' : 'btn-w'}
@@ -757,7 +775,7 @@ setSelectedZoneIds([]);
             <button
               type="button"
               className={activeTab === 'saved' ? 'btn-g' : 'btn-w'}
-              style={{ minHeight: '40px', padding: '.45rem .5rem', fontSize: '.75rem' }}
+              style={{ minHeight: '48px', padding: '.65rem .9rem', fontSize: '.9rem' }}
               onClick={() => setActiveTab('saved')}
             >
               Projets sauvegardés
@@ -765,7 +783,7 @@ setSelectedZoneIds([]);
             <button
               type="button"
               className={activeTab === 'bank' ? 'btn-g' : 'btn-w'}
-              style={{ minHeight: '40px', padding: '.45rem .5rem', fontSize: '.75rem' }}
+              style={{ minHeight: '48px', padding: '.65rem .9rem', fontSize: '.9rem' }}
               onClick={() => setActiveTab('bank')}
             >
               Banque de verre
@@ -774,7 +792,7 @@ setSelectedZoneIds([]);
         </div>
 
         {activeTab === 'current' && (
-          <>
+          <div className="current-layout">
         {/* Action buttons */}
         <div className="g2 mt3">
           <button type="button" onClick={reset} className="btn-w">
@@ -1101,7 +1119,7 @@ setSelectedZoneIds([]);
             );
           }}
         />
-          </>
+                    </div>
         )}
 
         {activeTab === 'saved' && (
