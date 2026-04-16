@@ -27,6 +27,8 @@ export default function ZonePanel({
   onDeleteZone,
   onAssignGlass,
 }: ZonePanelProps) {
+  const [isOpen, setIsOpen] = React.useState(true);
+
   const selectedZones = zones.filter((z) => selectedZoneIds.includes(z.id));
   const selectedZone = selectedZones[0] ?? null;
 
@@ -50,42 +52,53 @@ export default function ZonePanel({
     <>
       {zones.length > 0 && (
         <div className="card mt3 fi">
-          <p className="ctitle">
-            <span>🍂</span>Zones — {zones.length}
-          </p>
-          <div className="sys mt2">
-            {zones.map((zone) => {
-              const zg = glasses.find((g) => g.id === zone.glassId);
-              return (
-                <button
-                  key={zone.id}
-                  type="button"
-                  className={`zone-row${selectedZoneIds.includes(zone.id) ? ' sel' : ''}`}
-                  onClick={() => onSelectZone(zone.id)}
-                >
-                  <div className="fg">
-                    <span
-                      className="cdot"
-                      style={{
-                        backgroundColor: zg ? zg.couleur : 'rgba(139,105,20,.1)',
-                      }}
-                    />
-                    <div>
-                      <span className="tsm tbold" style={{ color: '#2d2416' }}>
-                        {zone.label}
-                      </span>
-                      {zg && (
-                        <p className="tmu" style={{ margin: 0, fontSize: '.75rem' }}>
-                          {zg.nom}
-                        </p>
-                      )}
+          <button
+            type="button"
+            onClick={() => setIsOpen((p) => !p)}
+            className="zone-row"
+            style={{ marginBottom: isOpen ? '.5rem' : 0 }}
+          >
+            <span className="ctitle" style={{ margin: 0 }}>
+              <span>🍂</span>Zones — {zones.length}
+            </span>
+            <span className="tmu">{isOpen ? '▲' : '▼'}</span>
+          </button>
+
+          {isOpen && (
+            <div className="sys mt2">
+              {zones.map((zone) => {
+                const zg = glasses.find((g) => g.id === zone.glassId);
+                return (
+                  <button
+                    key={zone.id}
+                    type="button"
+                    className={`zone-row${selectedZoneIds.includes(zone.id) ? ' sel' : ''}`}
+                    onClick={() => onSelectZone(zone.id)}
+                  >
+                    <div className="fg">
+                      <span
+                        className="cdot"
+                        style={{
+                          backgroundColor: zg ? zg.couleur : 'rgba(139,105,20,.1)',
+                        }}
+                      />
+                      <div>
+                        <span className="tsm tbold" style={{ color: '#2d2416' }}>
+                          {zone.label}
+                        </span>
+                        {zg && (
+                          <p className="tmu" style={{ margin: 0, fontSize: '.75rem' }}>
+                            {zg.nom}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <span className="tmu">{zone.area_px.toLocaleString()} px</span>
-                </button>
-              );
-            })}
-          </div>
+                    <span className="tmu">{zone.area_px.toLocaleString()} px</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
