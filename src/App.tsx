@@ -737,7 +737,6 @@ setSelectedZoneIds([]);
       </style>
       <ParchmentBg />
       <div className="app-shell">
-      >
         {/* Header */}
         <div className="hdr-wrap" style={{ paddingTop: '.75rem' }}>
           <div className="hdr-inner">
