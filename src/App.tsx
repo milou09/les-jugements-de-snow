@@ -360,7 +360,7 @@ useEffect(() => {
         height: Math.round(img.height * ratio),
       });
       setZones([]);
-      setSelectedZoneId(null);
+      setSelectedZoneIds([]);
       setScaleLine(null);
       setPendingScalePixels(null);
       setScaleInputCm('');
@@ -394,7 +394,7 @@ useEffect(() => {
     setScaleLine(null);
     setIsDrawingScale(false);
     setScaleStart(null);
-    setSelectedZoneId(null);
+    setSelectedZoneIds([]);
     setPendingScalePixels(null);
     setScaleInputCm('');
     setCopperPricePerMeter('');
@@ -437,7 +437,7 @@ useEffect(() => {
 
 const applyProjectState = (state: SavedProjectState) => {
   setMode('zone');
-  setSelectedZoneId(null);
+  setSelectedZoneIds([]);
   setPendingScalePixels(null);
   setScaleInputCm('');
   setShowResult(false);
@@ -812,7 +812,7 @@ setSelectedZoneIds([]);
           canvasSize={canvasSize}
           baseImageData={baseImageData}
           zones={zones}
-          selectedZoneId={selectedZoneId}
+          selectedZoneIds={selectedZoneIds}
           scaleLine={scaleLine}
           mode={mode}
           zoomLevel={zoomLevel}
@@ -872,7 +872,7 @@ setSelectedZoneIds([]);
         <ZonePanel
           zones={zones}
           glasses={glasses}
-          selectedZoneId={selectedZoneId}
+          selectedZoneIds={selectedZoneIds}
           scale={scale}
           onSelectZone={handleSelectZone}
           onDeleteZone={handleDeleteZone}
