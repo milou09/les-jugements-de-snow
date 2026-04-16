@@ -254,8 +254,9 @@ input[type=file]::file-selector-button{background:linear-gradient(135deg,rgba(12
 }
 
 .cwrap canvas{
-  width:100%;
+  width:auto;
   height:auto;
+  max-width:100%;
   max-height:100%;
   object-fit:contain;
 }
