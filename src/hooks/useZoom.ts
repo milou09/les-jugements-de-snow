@@ -82,21 +82,27 @@ export function useZoom(canvasRef: React.RefObject<HTMLCanvasElement>) {
 
   // Convert screen coords → canvas pixel coords accounting for zoom/pan
   const getCanvasXY = useCallback((
-    clientX: number,
-    clientY: number,
-    wrapRect: DOMRect,
-    canvasNativeWidth: number,
-    canvasDisplayWidth: number
-  ) => {
-    const { scale, tx, ty } = zoomRef.current;
-    const rx = (clientX - wrapRect.left - tx) / scale;
-    const ry = (clientY - wrapRect.top  - ty) / scale;
-    const pixelRatio = canvasNativeWidth / (canvasDisplayWidth / scale);
-    return {
-      x: Math.floor(rx * pixelRatio),
-      y: Math.floor(ry * pixelRatio),
-    };
-  }, []);
+  clientX: number,
+  clientY: number,
+  wrapRect: DOMRect,
+  canvasNativeWidth: number,
+  canvasDisplayWidth: number,
+  canvasNativeHeight: number,
+  canvasDisplayHeight: number
+) => {
+  const { scale, tx, ty } = zoomRef.current;
+
+  const rx = (clientX - wrapRect.left - tx) / scale;
+  const ry = (clientY - wrapRect.top - ty) / scale;
+
+  const scaleX = canvasNativeWidth / canvasDisplayWidth;
+  const scaleY = canvasNativeHeight / canvasDisplayHeight;
+
+  return {
+    x: Math.floor(rx * scaleX),
+    y: Math.floor(ry * scaleY),
+  };
+}, []);
 
   return {
     zoomRef,
