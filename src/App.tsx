@@ -248,11 +248,15 @@ input[type=file]::file-selector-button{background:linear-gradient(135deg,rgba(12
 }
 .cwrap{
   height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .cwrap canvas{
   width:100%;
-  height:100%;
+  height:auto;
+  max-height:100%;
   object-fit:contain;
 }
 `;
