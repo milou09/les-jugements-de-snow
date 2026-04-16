@@ -92,7 +92,7 @@ export default function Canvas({
     const x = centerIndex % canvas.width;
     const y = Math.floor(centerIndex / canvas.width);
 
-    ctx.fillText(String(zone.id), x, y);
+    ctx.fillText(zone.label.replace(/\D+/g, '') || String(zone.id), x, y);
   }
 
   ctx.restore();
