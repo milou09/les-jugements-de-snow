@@ -214,6 +214,47 @@ input[type=file]::file-selector-button{background:linear-gradient(135deg,rgba(12
     top:1rem;
   }
 }
+.workspace-layout{
+  display:grid;
+  grid-template-columns: 260px minmax(0,1fr) 360px;
+  gap:1rem;
+  align-items:start;
+}
+
+.left-col,.center-col,.right-col{
+  min-width:0;
+}
+
+.center-top{
+  display:flex;
+  gap:.5rem;
+  margin-bottom:.5rem;
+}
+
+.canvas-panel{
+  height:calc(100vh - 260px);
+  max-height:calc(100vh - 260px);
+}
+
+.center-col .card{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+}
+
+.center-col .cwrap{
+  flex:1;
+  min-height:0;
+}
+.cwrap{
+  height:100%;
+}
+
+.cwrap canvas{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
 `;
 
 /* ─── Parchment background ────────────────────────────────────────────────── */
@@ -790,47 +831,181 @@ setSelectedZoneIds([]);
           </div>
         </div>
 
-        {activeTab === 'current' && (
-          <div className="current-layout">
-        {/* Action buttons */}
-        <div className="g2 mt3">
-          <button type="button" onClick={reset} className="btn-w">
-            Nouveau projet
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode((p) => (p === 'scale' ? 'zone' : 'scale'))}
-            className="btn-g"
-          >
-            {mode === 'scale' ? '→ Zones' : '⟷ Échelle'}
-          </button>
+     {activeTab === 'current' && (
+  <div className="workspace-layout">
+    <div className="left-col">
+      <div className="card mt3">
+        <p className="ctitle">
+          <span>🌿</span>Image du patron
+        </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+        />
+      </div>
+
+      <div className="g2 mt3">
+        <button type="button" onClick={reset} className="btn-w">
+          Nouveau projet
+        </button>
+        <button type="button" onClick={saveProject} className="btn-g">
+          Sauvegarder
+        </button>
+      </div>
+
+      <div className="card mt3">
+        <p className="ctitle">
+          <span>🔧</span>Cuivre
+        </p>
+        <div className="sys tsm mt2">
+          <div className="fb">
+            <span>Périmètre total</span>
+            <span>{totalPerimPx.toLocaleString()} px</span>
           </div>
-            <button
-  type="button"
-  onClick={() => setShowZoneNumbers((p) => !p)}
-  className="btn-w wfull mt2"
->
-  {showZoneNumbers ? 'Masquer les numéros' : 'Afficher les numéros'}
-</button>
+          <div className="fb">
+            <span>Longueur</span>
+            <span>
+              {scale ? `${copperCm.toFixed(2)} cm` : '— échelle manquante'}
+            </span>
+          </div>
+        </div>
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min="0"
+          value={copperPricePerMeter}
+          onChange={(e) => setCopperPricePerMeter(e.target.value)}
+          className="inp mt3"
+          placeholder="Prix cuivre (€/m)"
+        />
+        <div className="fb tsm mt2">
+          <span>Coût cuivre</span>
+          <span className="tbold">{copperCost.toFixed(2)} €</span>
+        </div>
+      </div>
 
-<button type="button" onClick={saveProject} className="btn-g wfull mt2">
-  Sauvegarder ce projet
-</button>
+      <div className="card mt3">
+        <p className="ctitle">
+          <span>✦</span>Soudure
+        </p>
+        <p className="tsm mt2">
+          Longueur : {scale ? `${copperCm.toFixed(2)} cm` : '— échelle manquante'}
+        </p>
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min="0"
+          value={solderPricePerMeter}
+          onChange={(e) => setSolderPricePerMeter(e.target.value)}
+          className="inp mt3"
+          placeholder="Prix soudure (€/m)"
+        />
+        <div className="fb tsm mt2">
+          <span>Coût soudure</span>
+          <span className="tbold">{solderCost.toFixed(2)} €</span>
+        </div>
+      </div>
 
-        {/* Image import */}
-        <div className="card mt4">
-          <p className="ctitle">
-            <span>🌿</span>Image du patron
-          </p>
+      <div className="card mt3">
+        <p className="ctitle">
+          <span>🕐</span>Main d'œuvre
+        </p>
+        <div className="g2 mt2">
           <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            min="0"
+            value={laborHours}
+            onChange={(e) => setLaborHours(e.target.value)}
+            className="inp"
+            placeholder="Heures"
+          />
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            value={laborRate}
+            onChange={(e) => setLaborRate(e.target.value)}
+            className="inp"
+            placeholder="€/heure"
           />
         </div>
+        <div className="fb tsm mt2">
+          <span>Coût main d'œuvre</span>
+          <span className="tbold">{laborCost.toFixed(2)} €</span>
+        </div>
+      </div>
+    </div>
 
-        {/* Canvas */}
+    <div className="center-col">
+      <div className="center-top mt3">
+        <button
+          type="button"
+          onClick={() => setMode((p) => (p === 'scale' ? 'zone' : 'scale'))}
+          className="btn-g"
+          style={{ flex: 1 }}
+        >
+          {mode === 'scale' ? '→ Zones' : '⟷ Échelle'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowZoneNumbers((p) => !p)}
+          className="btn-w"
+          style={{ flex: 1 }}
+        >
+          {showZoneNumbers ? 'Masquer les numéros' : 'Afficher les numéros'}
+        </button>
+      </div>
+
+      {(scale || mode === 'scale' || scaleLine || pendingScalePixels) && (
+        <div className="card mt2 fi">
+          <p className="ctitle">
+            <span>📏</span>Échelle
+          </p>
+          {scale && (
+            <p className="tsm">Enregistrée : {scale.toFixed(4)} cm/px</p>
+          )}
+          {!scale && mode === 'scale' && !pendingScalePixels && (
+            <p className="tmu">
+              Trace une ligne, puis saisis sa longueur réelle.
+            </p>
+          )}
+          {pendingScalePixels && (
+            <div className="sy mt2">
+              <p className="tsm">
+                Ligne : {pendingScalePixels.toFixed(1)} px
+              </p>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={scaleInputCm}
+                onChange={(e) => setScaleInputCm(e.target.value)}
+                className="inp"
+                placeholder="Longueur réelle (cm)"
+              />
+              <button
+                type="button"
+                onClick={handleSaveScale}
+                className="btn-g wfull"
+              >
+                Enregistrer l'échelle
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="canvas-panel mt3">
+  <div className="card">
         <Canvas
           imageSrc={imageSrc}
           imageElement={imageElement}
@@ -852,275 +1027,140 @@ setSelectedZoneIds([]);
           canvasRef={canvasRef}
           canvasWrapRef={canvasWrapRef}
         />
+      </div>
+    </div>
 
-        {/* Scale panel */}
-        {(scale || mode === 'scale' || scaleLine || pendingScalePixels) && (
-          <div className="card mt3 fi">
-            <p className="ctitle">
-              <span>📏</span>Échelle
-            </p>
-            {scale && (
-              <p className="tsm">Enregistrée : {scale.toFixed(4)} cm/px</p>
-            )}
-            {!scale && mode === 'scale' && !pendingScalePixels && (
-              <p className="tmu">
-                Trace une ligne, puis saisis sa longueur réelle.
-              </p>
-            )}
-            {pendingScalePixels && (
-              <div className="sy mt2">
-                <p className="tsm">
-                  Ligne : {pendingScalePixels.toFixed(1)} px
-                </p>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  value={scaleInputCm}
-                  onChange={(e) => setScaleInputCm(e.target.value)}
-                  className="inp"
-                  placeholder="Longueur réelle (cm)"
-                />
-                <button
-                  type="button"
-                  onClick={handleSaveScale}
-                  className="btn-g wfull"
-                >
-                  Enregistrer l'échelle
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+    <div className="right-col">
+      <ZonePanel
+        zones={zones}
+        glasses={glasses}
+        selectedZoneIds={selectedZoneIds}
+        scale={scale}
+        onSelectZone={handleSelectZone}
+        onDeleteZone={handleDeleteZone}
+        onAssignGlass={handleAssignGlass}
+      />
 
-        {/* Zones */}
-        <ZonePanel
-          zones={zones}
-          glasses={glasses}
-          selectedZoneIds={selectedZoneIds}
-          scale={scale}
-          onSelectZone={handleSelectZone}
-          onDeleteZone={handleDeleteZone}
-          onAssignGlass={handleAssignGlass}
-        />
-
-        {/* Copper */}
-        <div className="card mt3">
-          <p className="ctitle">
-            <span>🔧</span>Cuivre
-          </p>
-          <div className="sys tsm mt2">
-            <div className="fb">
-              <span>Périmètre total</span>
-              <span>{totalPerimPx.toLocaleString()} px</span>
+      <div className="card mt3">
+        <p className="ctitle">
+          <span>🌱</span>Récapitulatif
+        </p>
+        <div className="sys mt2">
+          {(
+            [
+              ['Verre', glassCost],
+              ['Cuivre', copperCost],
+              ['Soudure', solderCost],
+              ["Main d'œuvre", laborCost],
+            ] as [string, number][]
+          ).map(([l, v]) => (
+            <div key={l} className="fb tsm">
+              <span>{l}</span>
+              <span>{v.toFixed(2)} €</span>
             </div>
-            <div className="fb">
-              <span>Longueur</span>
-              <span>
-                {scale ? `${copperCm.toFixed(2)} cm` : '— échelle manquante'}
-              </span>
-            </div>
+          ))}
+          <div className="divider" />
+          <div className="fb" style={{ fontSize: '.95rem', fontWeight: 600 }}>
+            <span>Coût total</span>
+            <span>{totalCost.toFixed(2)} €</span>
           </div>
+        </div>
+      </div>
+
+      <div className="card mt3">
+        <p className="ctitle">
+          <span>🍀</span>Formule de prix
+        </p>
+        <div className="sy mt2">
+          {(
+            [
+              ['x2_materiaux', '×2 matériaux'],
+              ['x2_plus_mo', '×2 matériaux + MO'],
+              ['x3_total', '×3 total'],
+              ['marge_30', 'Marge 30 %'],
+              ['custom', 'Formule personnalisée'],
+            ] as [string, string][]
+          ).map(([v, l]) => (
+            <label key={v} className="rlabel">
+              <input
+                type="radio"
+                name="pm"
+                checked={pricingMode === v}
+                onChange={() => setPricingMode(v)}
+              />
+              <span>{l}</span>
+            </label>
+          ))}
+        </div>
+        <div className="mt3">
           <input
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0"
-            value={copperPricePerMeter}
-            onChange={(e) => setCopperPricePerMeter(e.target.value)}
-            className="inp mt3"
-            placeholder="Prix cuivre (€/m)"
+            type="text"
+            value={customFormula}
+            onChange={(e) => setCustomFormula(e.target.value)}
+            className="inp"
+            placeholder="(cost_total * 2.5) + 20"
+            disabled={pricingMode !== 'custom'}
           />
-          <div className="fb tsm mt2">
-            <span>Coût cuivre</span>
-            <span className="tbold">{copperCost.toFixed(2)} €</span>
-          </div>
-        </div>
-
-        {/* Solder */}
-        <div className="card mt3">
-          <p className="ctitle">
-            <span>✦</span>Soudure
+          <p className="tmu mt2">
+            Variables : cost_total · glass_cost · copper_cost · solder_cost · labor_cost
           </p>
-          <p className="tsm mt2">
-            Longueur :{' '}
-            {scale ? `${copperCm.toFixed(2)} cm` : '— échelle manquante'}
-          </p>
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0"
-            value={solderPricePerMeter}
-            onChange={(e) => setSolderPricePerMeter(e.target.value)}
-            className="inp mt3"
-            placeholder="Prix soudure (€/m)"
-          />
-          <div className="fb tsm mt2">
-            <span>Coût soudure</span>
-            <span className="tbold">{solderCost.toFixed(2)} €</span>
-          </div>
         </div>
-
-        {/* Labour */}
-        <div className="card mt3">
-          <p className="ctitle">
-            <span>🕐</span>Main d'œuvre
-          </p>
-          <div className="g2 mt2">
-            <input
-              type="number"
-              inputMode="decimal"
-              step="0.1"
-              min="0"
-              value={laborHours}
-              onChange={(e) => setLaborHours(e.target.value)}
-              className="inp"
-              placeholder="Heures"
-            />
-            <input
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              value={laborRate}
-              onChange={(e) => setLaborRate(e.target.value)}
-              className="inp"
-              placeholder="€/heure"
-            />
-          </div>
-          <div className="fb tsm mt2">
-            <span>Coût main d'œuvre</span>
-            <span className="tbold">{laborCost.toFixed(2)} €</span>
-          </div>
-        </div>
-
-        {/* Total */}
-        <div className="card mt3">
-          <p className="ctitle">
-            <span>🌱</span>Récapitulatif
-          </p>
-          <div className="sys mt2">
-            {(
-              [
-                ['Verre', glassCost],
-                ['Cuivre', copperCost],
-                ['Soudure', solderCost],
-                ["Main d'œuvre", laborCost],
-              ] as [string, number][]
-            ).map(([l, v]) => (
-              <div key={l} className="fb tsm">
-                <span>{l}</span>
-                <span>{v.toFixed(2)} €</span>
-              </div>
-            ))}
-            <div className="divider" />
-            <div className="fb" style={{ fontSize: '.95rem', fontWeight: 600 }}>
-              <span>Coût total</span>
-              <span>{totalCost.toFixed(2)} €</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Pricing formula */}
-        <div className="card mt3">
-          <p className="ctitle">
-            <span>🍀</span>Formule de prix
-          </p>
-          <div className="sy mt2">
-            {(
-              [
-                ['x2_materiaux', '×2 matériaux'],
-                ['x2_plus_mo', '×2 matériaux + MO'],
-                ['x3_total', '×3 total'],
-                ['marge_30', 'Marge 30 %'],
-                ['custom', 'Formule personnalisée'],
-              ] as [string, string][]
-            ).map(([v, l]) => (
-              <label key={v} className="rlabel">
-                <input
-                  type="radio"
-                  name="pm"
-                  checked={pricingMode === v}
-                  onChange={() => setPricingMode(v)}
-                />
-                <span>{l}</span>
-              </label>
-            ))}
-          </div>
-          <div className="mt3">
-            <input
-              type="text"
-              value={customFormula}
-              onChange={(e) => setCustomFormula(e.target.value)}
-              className="inp"
-              placeholder="(cost_total * 2.5) + 20"
-              disabled={pricingMode !== 'custom'}
-            />
-            <p className="tmu mt2">
-              Variables : cost_total · glass_cost · copper_cost · solder_cost ·
-              labor_cost
-            </p>
-          </div>
-          <div
-            style={{
-              marginTop: '.75rem',
-              background: 'rgba(245,240,225,.6)',
-              border: '1px solid rgba(139,105,20,.12)',
-              borderRadius: '3px',
-              padding: '.65rem',
-            }}
-          >
-            {finalPrice.error ? (
-              <p className="err">Erreur : {finalPrice.error}</p>
-            ) : (
-              <p className="ok">
-                Prix calculé :{' '}
-                <span className="okv">{finalPrice.value.toFixed(2)} €</span>
-              </p>
-            )}
-          </div>
-          <div className="fl g2r mt3">
-            <button
-              type="button"
-              onClick={() => openResult('compliment')}
-              disabled={!!finalPrice.error}
-              className="btn-g"
-              style={{ flex: 1 }}
-            >
-              Calculer ✨
-            </button>
-            <button
-              type="button"
-              onClick={() => openResult('roast')}
-              disabled={!!finalPrice.error}
-              className="btn-w"
-              style={{ flex: 1 }}
-            >
-              Roast 🔥
-            </button>
-          </div>
-        </div>
-
-        {/* Glass library */}
-        <GlassLibrary
-          glasses={glasses}
-          onAdd={(g) => setGlasses((p) => [...p, g])}
-          onDelete={(id) => {
-            setGlasses((p) => p.filter((g) => g.id !== id));
-            setZones((p) =>
-              p.map((z) =>
-                z.glassId === id
-                  ? { ...z, glassId: null, color: null, zone_cost: 0 }
-                  : z
-              )
-            );
+        <div
+          style={{
+            marginTop: '.75rem',
+            background: 'rgba(245,240,225,.6)',
+            border: '1px solid rgba(139,105,20,.12)',
+            borderRadius: '3px',
+            padding: '.65rem',
           }}
-        />
-                    </div>
-        )}
+        >
+          {finalPrice.error ? (
+            <p className="err">Erreur : {finalPrice.error}</p>
+          ) : (
+            <p className="ok">
+              Prix calculé : <span className="okv">{finalPrice.value.toFixed(2)} €</span>
+            </p>
+          )}
+        </div>
+        <div className="fl g2r mt3">
+          <button
+            type="button"
+            onClick={() => openResult('compliment')}
+            disabled={!!finalPrice.error}
+            className="btn-g"
+            style={{ flex: 1 }}
+          >
+            Calculer ✨
+          </button>
+          <button
+            type="button"
+            onClick={() => openResult('roast')}
+            disabled={!!finalPrice.error}
+            className="btn-w"
+            style={{ flex: 1 }}
+          >
+            Roast 🔥
+          </button>
+        </div>
+      </div>
 
+      <GlassLibrary
+        glasses={glasses}
+        onAdd={(g) => setGlasses((p) => [...p, g])}
+        onDelete={(id) => {
+          setGlasses((p) => p.filter((g) => g.id !== id));
+          setZones((p) =>
+            p.map((z) =>
+              z.glassId === id
+                ? { ...z, glassId: null, color: null, zone_cost: 0 }
+                : z
+            )
+          );
+        }}
+      />
+    </div>
+  </div>
+)}
         {activeTab === 'saved' && (
   <div className="card mt3">
     <p className="ctitle">
