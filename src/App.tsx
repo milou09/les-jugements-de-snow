@@ -284,6 +284,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'current' | 'saved' | 'bank'>(
     'current'
   );
+  const [showZoneNumbers, setShowZoneNumbers] = useState(false);
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
 
   const {
@@ -787,6 +788,13 @@ setSelectedZoneIds([]);
             {mode === 'scale' ? '→ Zones' : '⟷ Échelle'}
           </button>
           </div>
+            <button
+  type="button"
+  onClick={() => setShowZoneNumbers((p) => !p)}
+  className="btn-w wfull mt2"
+>
+  {showZoneNumbers ? 'Masquer les numéros' : 'Afficher les numéros'}
+</button>
 
 <button type="button" onClick={saveProject} className="btn-g wfull mt2">
   Sauvegarder ce projet
@@ -810,6 +818,7 @@ setSelectedZoneIds([]);
           imageSrc={imageSrc}
           imageElement={imageElement}
           canvasSize={canvasSize}
+          showZoneNumbers={showZoneNumbers}
           baseImageData={baseImageData}
           zones={zones}
           selectedZoneIds={selectedZoneIds}
