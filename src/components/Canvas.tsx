@@ -117,7 +117,7 @@ export default function Canvas({
 
       ctx.restore();
     }
-  }, [baseImageData, zones, scaleLine, selectedZoneIds, canvasRef]);
+  }, [baseImageData, zones, scaleLine, selectedZoneIds, showZoneNumbers, canvasRef]);
 
   useEffect(() => { redraw(); }, [redraw]);
 
