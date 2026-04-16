@@ -812,7 +812,7 @@ setSelectedZoneIds([]);
           canvasSize={canvasSize}
           baseImageData={baseImageData}
           zones={zones}
-          selectedZoneIds={selectedZoneIds}
+          selectedZoneId={selectedZoneIds[0] ?? null}
           scaleLine={scaleLine}
           mode={mode}
           zoomLevel={zoomLevel}
@@ -872,7 +872,7 @@ setSelectedZoneIds([]);
         <ZonePanel
           zones={zones}
           glasses={glasses}
-          selectedZoneIds={selectedZoneIds}
+          selectedZoneId={selectedZoneIds[0] ?? null}
           scale={scale}
           onSelectZone={handleSelectZone}
           onDeleteZone={handleDeleteZone}
