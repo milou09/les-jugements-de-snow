@@ -872,7 +872,7 @@ setSelectedZoneIds([]);
         <ZonePanel
           zones={zones}
           glasses={glasses}
-          selectedZoneId={selectedZoneIds[0] ?? null}
+          selectedZoneIds={selectedZoneIds}
           scale={scale}
           onSelectZone={handleSelectZone}
           onDeleteZone={handleDeleteZone}
