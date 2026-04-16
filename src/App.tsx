@@ -566,15 +566,24 @@ const deleteSavedProject = (id: string) => {
 };
   // ── Pointer coords ──
   const getXY = useCallback(
-    (e: React.PointerEvent) => {
-      const canvas = canvasRef.current;
-      const wrap = canvasWrapRef.current;
-      if (!canvas || !wrap) return { x: 0, y: 0 };
-      const rect = wrap.getBoundingClientRect();
-      return getCanvasXY(e.clientX, e.clientY, rect, canvas.width, rect.width);
-    },
-    [getCanvasXY]
-  );
+  (e: React.PointerEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+
+    return getCanvasXY(
+      e.clientX,
+      e.clientY,
+      rect,
+      canvas.width,
+      rect.width,
+      canvas.height,
+      rect.height
+    );
+  },
+  [getCanvasXY]
+);
 
   // ── Canvas pointer events ──
   const onPointerDown = useCallback(
