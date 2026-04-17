@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
-import { LeafBranch } from './svg/Illustrations';
+import { LeafBranch, WildFlower } from './svg/Illustrations';
 import type { Zone } from '../hooks/useZoneDetection';
 
 interface CanvasProps {
@@ -25,25 +25,11 @@ interface CanvasProps {
 }
 
 export default function Canvas({
-  showZoneNumbers,
-  imageSrc,
-  imageElement,
-  canvasSize,
-  baseImageData,
-  zones,
-  selectedZoneIds,
-  scaleLine,
-  mode,
-  zoomLevel,
-  onPointerDown,
-  onPointerMove,
-  onPointerUp,
-  onWrapTouchStart,
-  onWrapTouchMove,
-  onWrapTouchEnd,
-  onDoubleTap,
-  canvasRef,
-  canvasWrapRef,
+  showZoneNumbers, imageSrc, imageElement, canvasSize, baseImageData,
+  zones, selectedZoneIds, scaleLine, mode, zoomLevel,
+  onPointerDown, onPointerMove, onPointerUp,
+  onWrapTouchStart, onWrapTouchMove, onWrapTouchEnd, onDoubleTap,
+  canvasRef, canvasWrapRef,
 }: CanvasProps) {
 
   const redraw = useCallback(() => {
@@ -51,24 +37,15 @@ export default function Canvas({
     if (!canvas || !baseImageData) return;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
-
     ctx.putImageData(baseImageData, 0, 0);
 
     if (zones.length > 0) {
       const ov = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const d = ov.data;
-
       for (const zone of zones) {
         for (const pi of zone.pixelArray) {
           const off = pi * 4;
-
-          if (zone.color) {
-            d[off]   = zone.color.r;
-            d[off+1] = zone.color.g;
-            d[off+2] = zone.color.b;
-            d[off+3] = Math.round(zone.color.a * 255);
-          }
-
+          if (zone.color) { d[off] = zone.color.r; d[off+1] = zone.color.g; d[off+2] = zone.color.b; d[off+3] = Math.round(zone.color.a * 255); }
           if (selectedZoneIds.includes(zone.id)) {
             d[off]   = Math.round(d[off]   * 0.75 + 16  * 0.25);
             d[off+1] = Math.round(d[off+1] * 0.75 + 185 * 0.25);
@@ -76,52 +53,36 @@ export default function Canvas({
           }
         }
       }
-
       ctx.putImageData(ov, 0, 0);
+
       if (showZoneNumbers) {
-  ctx.save();
-  ctx.fillStyle = '#2d2416';
-  ctx.font = 'bold 20px serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  for (const zone of zones) {
-    if (!zone.pixelArray || zone.pixelArray.length === 0) continue;
-
-    let sumX = 0;
-let sumY = 0;
-
-for (const pi of zone.pixelArray) {
-  sumX += pi % canvas.width;
-  sumY += Math.floor(pi / canvas.width);
-}
-
-const x = sumX / zone.pixelArray.length;
-const y = sumY / zone.pixelArray.length;
-
-    ctx.fillText(zone.label.replace(/\D+/g, '') || String(zone.id), x, y);
-  }
-
-  ctx.restore();
-}
+        ctx.save();
+        ctx.font = 'bold 18px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (const zone of zones) {
+          if (!zone.pixelArray?.length) continue;
+          let sumX = 0, sumY = 0;
+          for (const pi of zone.pixelArray) { sumX += pi % canvas.width; sumY += Math.floor(pi / canvas.width); }
+          const x = sumX / zone.pixelArray.length, y = sumY / zone.pixelArray.length;
+          ctx.fillStyle = 'rgba(255,255,255,0.75)';
+          ctx.fillRect(x - 10, y - 10, 20, 20);
+          ctx.fillStyle = '#2d2416';
+          ctx.fillText(zone.label.replace(/\D+/g, '') || String(zone.id), x, y);
+        }
+        ctx.restore();
+      }
     }
 
     if (scaleLine) {
       ctx.save();
-      ctx.strokeStyle = '#5c7a3e';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(scaleLine.x1, scaleLine.y1);
-      ctx.lineTo(scaleLine.x2, scaleLine.y2);
-      ctx.stroke();
-
+      ctx.strokeStyle = '#5c7a3e'; ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 3]);
+      ctx.beginPath(); ctx.moveTo(scaleLine.x1, scaleLine.y1); ctx.lineTo(scaleLine.x2, scaleLine.y2); ctx.stroke();
+      ctx.setLineDash([]);
       for (const [x, y] of [[scaleLine.x1, scaleLine.y1], [scaleLine.x2, scaleLine.y2]] as [number, number][]) {
-        ctx.fillStyle = '#5c7a3e';
-        ctx.beginPath();
-        ctx.arc(x, y, 5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = '#5c7a3e'; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
       }
-
       ctx.restore();
     }
   }, [baseImageData, zones, scaleLine, selectedZoneIds, showZoneNumbers, canvasRef]);
@@ -131,63 +92,43 @@ const y = sumY / zone.pixelArray.length;
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !imageElement || !canvasSize.width) return;
-
-    canvas.width = canvasSize.width;
-    canvas.height = canvasSize.height;
-
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return;
-
+    canvas.width = canvasSize.width; canvas.height = canvasSize.height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true }); if (!ctx) return;
     ctx.drawImage(imageElement, 0, 0, canvasSize.width, canvasSize.height);
   }, [imageElement, canvasSize, canvasRef]);
 
-  return (
-    <div className="card mt3">
-      {imageSrc ? (
-        <>
-          <div
-            ref={canvasWrapRef}
-            className="cwrap"
-            onTouchStart={e => {
-              const rect = canvasWrapRef.current?.getBoundingClientRect();
-              if (rect) onWrapTouchStart(e, rect);
-            }}
-            onTouchMove={e => {
-              const rect = canvasWrapRef.current?.getBoundingClientRect();
-              if (rect) onWrapTouchMove(e, rect);
-            }}
-            onTouchEnd={onWrapTouchEnd}
-            onClick={onDoubleTap}
-          >
-            <canvas
-              ref={canvasRef}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              style={{
-                touchAction: 'none',
-                cursor: mode === 'scale' ? 'crosshair' : 'pointer',
-              }}
-            />
-            {zoomLevel > 1.05 && (
-              <div className="zoom-badge">×{zoomLevel.toFixed(1)}</div>
-            )}
-          </div>
+  if (!imageSrc) {
+    return (
+      <div className="canvas-empty" style={{ height: '100%' }}>
+        <WildFlower style={{ width: '5rem', opacity: .35 }} />
+        <span>Importe le patron de ton vitrail</span>
+        <span style={{ fontSize: '.75rem', color: 'var(--ink-faint)' }}>PNG, JPG, WebP...</span>
+      </div>
+    );
+  }
 
-          <p className="tmu mt2" style={{ textAlign: 'center' }}>
-            {mode === 'scale'
-              ? '✏️ Trace une ligne de référence'
-              : zoomLevel > 1.05
-                ? '👆 Clique · 🤏 Pince pour zoomer · Double-tap pour réinitialiser'
-                : '👆 Clique · 🤏 Pince pour zoomer'}
-          </p>
-        </>
-      ) : (
-        <div className="ec">
-          <LeafBranch style={{ width: '6rem', opacity: .4 }}/>
-          <span>Importe le patron de ton vitrail</span>
-        </div>
-      )}
-    </div>
+  return (
+    <>
+      <div
+        ref={canvasWrapRef}
+        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+        onTouchStart={e => { const r = canvasWrapRef.current?.getBoundingClientRect(); if (r) onWrapTouchStart(e, r); }}
+        onTouchMove={e => { const r = canvasWrapRef.current?.getBoundingClientRect(); if (r) onWrapTouchMove(e, r); }}
+        onTouchEnd={onWrapTouchEnd}
+        onClick={onDoubleTap}
+      >
+        <canvas
+          ref={canvasRef}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          style={{ touchAction: 'none', cursor: mode === 'scale' ? 'crosshair' : 'pointer', maxWidth: '100%', maxHeight: '100%', display: 'block' }}
+        />
+      </div>
+      {zoomLevel > 1.05 && <div className="zoom-badge">×{zoomLevel.toFixed(1)}</div>}
+      <div className="canvas-hint">
+        {mode === 'scale' ? '✏️ Clique et glisse pour tracer une ligne' : '👆 Clique sur une zone pour la sélectionner'}
+      </div>
+    </>
   );
 }
