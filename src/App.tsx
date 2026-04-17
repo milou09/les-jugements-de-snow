@@ -161,8 +161,15 @@ export default function App() {
   const getXY = useCallback((e: React.PointerEvent) => {
     const canvas = canvasRef.current; if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    return getCanvasXY(e.clientX, e.clientY, rect, canvas.width, rect.width, canvas.height, rect.height);
-  }, [getCanvasXY]);
+    // Le canvas est centré dans un wrapper flex — on utilise le rect du canvas lui-même
+    // comme origine, pas celui du wrapper. On mappe coordonnées CSS → pixels natifs.
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: Math.floor((e.clientX - rect.left) * scaleX),
+      y: Math.floor((e.clientY - rect.top) * scaleY),
+    };
+  }, []);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!baseImageData) return; const { x, y } = getXY(e);
@@ -306,7 +313,7 @@ export default function App() {
           <main className="center-col">
             <div className="center-toolbar">
               <button type="button" className={'btn ' + (mode === 'scale' ? 'btn-w' : 'btn-ghost')} onClick={() => setMode((p) => (p === 'scale' ? 'zone' : 'scale'))}>
-                {mode === 'scale' ? "Terminer l'echelle" : "Definir l'echelle"}
+                {mode === 'scale' ? 'Terminer l'echelle' : 'Definir l'echelle'}
               </button>
               <button type="button" className="btn btn-ghost" onClick={() => setShowZoneNumbers((p) => !p)}>
                 {showZoneNumbers ? '# Masquer n°' : '# Afficher n°'}
