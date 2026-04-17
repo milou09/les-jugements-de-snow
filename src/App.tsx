@@ -313,7 +313,7 @@ export default function App() {
           <main className="center-col">
             <div className="center-toolbar">
               <button type="button" className={'btn ' + (mode === 'scale' ? 'btn-w' : 'btn-ghost')} onClick={() => setMode((p) => (p === 'scale' ? 'zone' : 'scale'))}>
-                {mode === 'scale' ? 'Terminer l'echelle' : 'Definir l'echelle'}
+                {mode === 'scale' ? "Terminer l'echelle" : "Definir l'echelle"}
               </button>
               <button type="button" className="btn btn-ghost" onClick={() => setShowZoneNumbers((p) => !p)}>
                 {showZoneNumbers ? '# Masquer n°' : '# Afficher n°'}
