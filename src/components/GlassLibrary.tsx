@@ -186,7 +186,7 @@ export default function GlassLibrary({
                 const alreadyAdded = projectGlassIds.includes(g.id);
 
                 return (
-                  <div key={g.id} className="glass-row">
+                  <div key={g.id} className={`glass-row fade-in ${alreadyAdded ? 'bank-added' : ''}`}>
                     <div
                       style={{
                         display: 'flex',
