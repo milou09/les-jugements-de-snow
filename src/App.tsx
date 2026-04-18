@@ -284,6 +284,7 @@ export default function App() {
   const handleAssignGlass = (glassId: string) => {
     const gl = glasses.find((g) => g.id === Number(glassId)); if (!gl || !selectedZoneIds.length) return;
     setZones((p) => p.map((z) => { if (!selectedZoneIds.includes(z.id)) return z; const a = z.area_cm2 ?? 0; return { ...z, glassId: gl.id, color: gl.overlayColor, zone_cost: a * (gl.prix_dm2 / 100) }; }));
+    setSelectedZoneIds([]);
   };
 
   const totalPerimPx = zones.reduce((s, z) => s + (z.perimeter_px || 0), 0);
