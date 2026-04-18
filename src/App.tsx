@@ -567,6 +567,7 @@ setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(n
 
 {showSnowWarning && (
   <div
+    className="snow-warning-overlay"
     style={{
       position: 'fixed',
       inset: 0,
@@ -578,9 +579,9 @@ setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(n
       padding: '1rem',
     }}
   >
-    <div
-      className="card"
-      style={{
+<div
+  className="card"
+  style={{
         width: '100%',
         maxWidth: '420px',
         textAlign: 'center',
@@ -589,7 +590,7 @@ setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(n
     >
      <div style={{ marginBottom: '.75rem' }}>
   <SnowPortrait mood="judging" />
-  <p className="tmu" style={{ fontSize: '.95rem', color: 'var(--ink-mid)', fontStyle: 'normal', lineHeight: 1.5, marginTop: '.5rem' }}>
+  <p className="tmu snow-warning-text" style={{ fontSize: '.95rem', color: 'var(--ink-mid)', fontStyle: 'normal', lineHeight: 1.5, marginTop: '.5rem' }}>
     Ce verre est utilisé dans ton projet. Tu veux vraiment le supprimer de la banque ?
   </p>
 </div>
