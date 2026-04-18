@@ -106,10 +106,13 @@ const [projectGlasses, setProjectGlasses] = useState<Glass[]>([]);
     if (!imageSrc) { setImageElement(null); setCanvasSize({ width: 0, height: 0 }); setBaseImageData(null); return; }
     const img = new Image();
     img.onload = () => {
-      const ratio = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
-      setImageElement(img); setCanvasSize({ width: Math.round(img.width * ratio), height: Math.round(img.height * ratio) });
-      setZones([]); setSelectedZoneIds([]); setScaleLine(null); setPendingScalePixels(null); setScaleInputCm(''); setShowResult(false); zoneCounterRef.current = 0;
-    };
+  const ratio = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
+  setImageElement(img);
+  setCanvasSize({
+    width: Math.round(img.width * ratio),
+    height: Math.round(img.height * ratio),
+  });
+};
     img.src = imageSrc;
   }, [imageSrc]);
 
