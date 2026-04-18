@@ -160,16 +160,16 @@ export default function App() {
 
   const getXY = useCallback((e: React.PointerEvent) => {
     const canvas = canvasRef.current; if (!canvas) return { x: 0, y: 0 };
-    const wrap = canvasWrapRef.current; if (!wrap) return { x: 0, y: 0 };
-    const wrapRect = wrap.getBoundingClientRect();
-    const canvasRect = canvas.getBoundingClientRect();
-    return getCanvasXY(
-      e.clientX, e.clientY,
-      wrapRect,
-      canvas.width, canvasRect.width,
-      canvas.height, canvasRect.height
-    );
-  }, [getCanvasXY]);
+    // Sans zoom desktop : pas de CSS transform sur le canvas.
+    // On utilise directement le rect du canvas comme référence.
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: Math.floor((e.clientX - rect.left) * scaleX),
+      y: Math.floor((e.clientY - rect.top) * scaleY),
+    };
+  }, []);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!baseImageData) return; const { x, y } = getXY(e);
