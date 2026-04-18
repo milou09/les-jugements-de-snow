@@ -22,7 +22,7 @@ const PROJECTS_STORAGE_KEY = 'vitrail_tiffany_projects_v1';
 type SavedProjectState = {
   imageSrc: string | null; zones: Zone[]; scale: number | null;
   scaleLine: { x1: number; y1: number; x2: number; y2: number } | null;
-  glasses: Glass[]; copperPricePerMeter: string; solderPricePerMeter: string;
+  projectGlasses: Glass[]; copperPricePerMeter: string; solderPricePerMeter: string;
   laborHours: string; laborRate: string; pricingMode: string; customFormula: string;
 };
 type SavedProject = { id: string; name: string; savedAt: string; state: SavedProjectState; };
@@ -79,7 +79,8 @@ export default function App() {
   const [selectedZoneIds, setSelectedZoneIds] = useState<number[]>([]);
   const [pendingScalePixels, setPendingScalePixels] = useState<number | null>(null);
   const [scaleInputCm, setScaleInputCm] = useState('');
-  const [glasses, setGlasses] = useState<Glass[]>([]);
+  const [globalGlasses, setGlobalGlasses] = useState<Glass[]>([]);
+const [projectGlasses, setProjectGlasses] = useState<Glass[]>([]);
   const [copperPricePerMeter, setCopperPricePerMeter] = useState('');
   const [solderPricePerMeter, setSolderPricePerMeter] = useState('');
   const [laborHours, setLaborHours] = useState('');
@@ -214,12 +215,12 @@ export default function App() {
     const reader = new FileReader(); reader.onload = () => { setImageSrc(reader.result as string); }; reader.readAsDataURL(file);
   };
 
-  const collectCurrentProjectState = (): SavedProjectState => ({ imageSrc, zones, scale, scaleLine, glasses, copperPricePerMeter, solderPricePerMeter, laborHours, laborRate, pricingMode, customFormula });
+  const collectCurrentProjectState = (): SavedProjectState => ({ imageSrc, zones, scale, scaleLine, projectGlasses, copperPricePerMeter, solderPricePerMeter, laborHours, laborRate, pricingMode, customFormula });
 
   const applyProjectState = (state: SavedProjectState) => {
     setMode('zone'); setSelectedZoneIds([]); setPendingScalePixels(null); setScaleInputCm(''); setShowResult(false);
     setZones(state.zones || []); setScale(state.scale ?? null); setScaleLine(state.scaleLine ?? null);
-    setGlasses(((state.glasses || []) as any[]).map(normalizeGlass).filter(Boolean) as Glass[]);
+setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(normalizeGlass).filter(Boolean) as Glass[]);
     setCopperPricePerMeter(state.copperPricePerMeter ?? ''); setSolderPricePerMeter(state.solderPricePerMeter ?? '');
     setLaborHours(state.laborHours ?? ''); setLaborRate(state.laborRate ?? '');
     setPricingMode(state.pricingMode ?? 'x2_materiaux'); setCustomFormula(state.customFormula ?? '(cost_total * 2.5) + 20');
@@ -282,7 +283,7 @@ export default function App() {
   const handleSelectZone = (id: number) => { setSelectedZoneIds((prev) => prev.includes(id) ? prev.filter((z) => z !== id) : [...prev, id]); };
   const handleDeleteZone = () => { if (!selectedZoneIds.length) return; setZones((p) => p.filter((z) => !selectedZoneIds.includes(z.id))); setSelectedZoneIds([]); };
   const handleAssignGlass = (glassId: string) => {
-    const gl = glasses.find((g) => g.id === Number(glassId)); if (!gl || !selectedZoneIds.length) return;
+  const gl = projectGlasses.find((g) => g.id === Number(glassId)); if (!gl || !selectedZoneIds.length) return;
     setZones((p) => p.map((z) => { if (!selectedZoneIds.includes(z.id)) return z; const a = z.area_cm2 ?? 0; return { ...z, glassId: gl.id, color: gl.overlayColor, zone_cost: a * (gl.prix_dm2 / 100) }; }));
     setSelectedZoneIds([]);
   };
@@ -442,7 +443,15 @@ export default function App() {
           </main>
 
           <aside className="sidebar sidebar-right">
-            <ZonePanel zones={zones} glasses={glasses} selectedZoneIds={selectedZoneIds} scale={scale} onSelectZone={handleSelectZone} onDeleteZone={handleDeleteZone} onAssignGlass={handleAssignGlass} />
+            <ZonePanel
+  zones={zones}
+  glasses={projectGlasses}
+  selectedZoneIds={selectedZoneIds}
+  scale={scale}
+  onSelectZone={handleSelectZone}
+  onDeleteZone={handleDeleteZone}
+  onAssignGlass={handleAssignGlass}
+/>
 
             <div className="card mt3">
               <p className="ctitle"><span>🌱</span> Recapitulatif</p>
@@ -475,7 +484,20 @@ export default function App() {
               </div>
             </div>
 
-            <GlassLibrary glasses={glasses} onAdd={(g) => setGlasses((p) => [...p, g])} onDelete={(id) => { setGlasses((p) => p.filter((g) => g.id !== id)); setZones((p) => p.map((z) => z.glassId === id ? { ...z, glassId: null, color: null, zone_cost: 0 } : z)); }} />
+            <GlassLibrary
+  glasses={projectGlasses}
+  onAdd={(g) => setProjectGlasses((p) => [...p, g])}
+  onDelete={(id) => {
+    setProjectGlasses((p) => p.filter((g) => g.id !== id));
+    setZones((p) =>
+      p.map((z) =>
+        z.glassId === id
+          ? { ...z, glassId: null, color: null, zone_cost: 0 }
+          : z
+      )
+    );
+  }}
+/>
             <div style={{ height: '1.5rem' }} />
           </aside>
         </div>
