@@ -523,18 +523,20 @@ setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(n
         </div>
       )}
 
-      <GlassLibrary
-  glasses={globalGlasses}
-  onAdd={(g) => setGlobalGlasses((p) => [...p, g])}
-  onDelete={(id) => {
-    setGlobalGlasses((p) => p.filter((g) => g.id !== id));
-  }}
-  onAddToProject={(g) =>
-    setProjectGlasses((p) =>
-      p.some((x) => x.id === g.id) ? p : [...p, g]
-    )
-  }
-/>
+      {activeTab === 'bank' && (
+  <div style={{ maxWidth: 700, margin: '2rem auto', padding: '0 1.5rem', position: 'relative', zIndex: 1 }}>
+    <GlassLibrary
+      glasses={globalGlasses}
+      onAdd={(g) => setGlobalGlasses((p) => [...p, g])}
+      onDelete={(id) => {
+        setGlobalGlasses((p) => p.filter((g) => g.id !== id));
+      }}
+      onAddToProject={(g) =>
+        setProjectGlasses((p) =>
+          p.some((x) => x.id === g.id) ? p : [...p, g]
+        )
+      }
+    />
   </div>
 )}
     </div>
