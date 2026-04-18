@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 export interface Glass {
   id: number;
@@ -66,7 +66,7 @@ export default function GlassLibrary({
     prix_dm2: '',
     couleur: '#7dd3fc',
   });
-
+  const [search, setSearch] = useState('');
   const [isOpen, setIsOpen] = useState(true);
 
   const handleAdd = () => {
@@ -91,6 +91,15 @@ export default function GlassLibrary({
       couleur: '#7dd3fc',
     });
   };
+
+  const filteredGlasses = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return glasses;
+
+    return glasses.filter((g) =>
+      g.nom.toLowerCase().includes(q)
+    );
+  }, [glasses, search]);
 
   return (
     <div className="card mt3">
@@ -161,11 +170,19 @@ export default function GlassLibrary({
             >
               + Ajouter
             </button>
+
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="inp"
+              placeholder="Rechercher un verre..."
+            />
           </div>
 
-          {glasses.length > 0 && (
+          {filteredGlasses.length > 0 && (
             <div className="stack-sm mt3">
-              {glasses.map((g) => (
+              {filteredGlasses.map((g) => (
                 <div key={g.id} className="glass-row">
                   <div
                     style={{
@@ -231,6 +248,10 @@ export default function GlassLibrary({
                 </div>
               ))}
             </div>
+          )}
+
+          {glasses.length > 0 && filteredGlasses.length === 0 && (
+            <p className="tmu mt2">Aucun verre trouvé.</p>
           )}
 
           {glasses.length === 0 && (
