@@ -97,8 +97,8 @@ const [projectGlasses, setProjectGlasses] = useState<Glass[]>([]);
 
   const { zoomLevel, onWrapTouchStart, onWrapTouchMove, onWrapTouchEnd, onDoubleTap, getCanvasXY } = useZoom(canvasRef);
 
-  useEffect(() => { try { const s = localStorage.getItem(GLASS_STORAGE_KEY); if (s) { const p = JSON.parse(s); if (Array.isArray(p)) setGlasses(p.map(normalizeGlass).filter(Boolean) as Glass[]); } } catch {} }, []);
-  useEffect(() => { localStorage.setItem(GLASS_STORAGE_KEY, JSON.stringify(glasses)); }, [glasses]);
+  useEffect(() => { try { const s = localStorage.getItem(GLASS_STORAGE_KEY); if (s) { const p = JSON.parse(s); if (Array.isArray(p)) setGlobalGlasses(p.map(normalizeGlass).filter(Boolean) as Glass[]); } } catch {} }, []);
+  useEffect(() => { localStorage.setItem(GLASS_STORAGE_KEY, JSON.stringify(globalGlasses)); }, [globalGlasses]);
   useEffect(() => { setSavedProjects(loadSavedProjects()); }, []);
   useEffect(() => { saveSavedProjects(savedProjects); }, [savedProjects]);
 
