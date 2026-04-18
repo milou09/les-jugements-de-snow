@@ -166,7 +166,7 @@ export default function GlassLibrary({
             <button
               type="button"
               onClick={handleAdd}
-              className="btn btn-g w-full"
+              className="btn btn-g w-full pop-in"
             >
               + Ajouter
             </button>
@@ -219,7 +219,7 @@ export default function GlassLibrary({
                           type="button"
                           disabled={alreadyAdded}
                           onClick={() => onAddToProject(g)}
-                          className="btn btn-ghost btn-sm"
+                          className={`btn btn-ghost btn-sm ${alreadyAdded ? '' : 'btn-attention'}`}
                         >
                           {alreadyAdded
   ? '✔ Déjà ajouté'
