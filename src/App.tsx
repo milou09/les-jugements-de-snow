@@ -121,6 +121,84 @@ export default function App() {
     setBaseImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
   }, [imageElement, canvasSize]);
 
+
+  // ── Redraw canvas (surbrillance, numéros, ligne d'échelle) ──
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !baseImageData) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+
+    // Restaurer l'image de base
+    ctx.putImageData(baseImageData, 0, 0);
+
+    // Appliquer couleurs et surbrillance des zones
+    if (zones.length > 0) {
+      const ov = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = ov.data;
+      for (const zone of zones) {
+        for (const pi of zone.pixelArray) {
+          const off = pi * 4;
+          if (zone.color) {
+            d[off]   = zone.color.r;
+            d[off+1] = zone.color.g;
+            d[off+2] = zone.color.b;
+            d[off+3] = Math.round(zone.color.a * 255);
+          }
+          if (selectedZoneIds.includes(zone.id)) {
+            d[off]   = Math.round(d[off]   * 0.65 + 16  * 0.35);
+            d[off+1] = Math.round(d[off+1] * 0.65 + 185 * 0.35);
+            d[off+2] = Math.round(d[off+2] * 0.65 + 129 * 0.35);
+          }
+        }
+      }
+      ctx.putImageData(ov, 0, 0);
+
+      // Numéros de zones
+      if (showZoneNumbers) {
+        ctx.save();
+        ctx.font = 'bold 16px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (const zone of zones) {
+          if (!zone.pixelArray?.length) continue;
+          let sumX = 0, sumY = 0;
+          for (const pi of zone.pixelArray) {
+            sumX += pi % canvas.width;
+            sumY += Math.floor(pi / canvas.width);
+          }
+          const x = sumX / zone.pixelArray.length;
+          const y = sumY / zone.pixelArray.length;
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.fillRect(x - 11, y - 10, 22, 20);
+          ctx.fillStyle = '#1e1810';
+          ctx.fillText(zone.label.replace(/\D+/g, '') || String(zone.id), x, y);
+        }
+        ctx.restore();
+      }
+    }
+
+    // Ligne d'échelle
+    if (scaleLine) {
+      ctx.save();
+      ctx.strokeStyle = '#5c7a3e';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 3]);
+      ctx.beginPath();
+      ctx.moveTo(scaleLine.x1, scaleLine.y1);
+      ctx.lineTo(scaleLine.x2, scaleLine.y2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      for (const [x, y] of [[scaleLine.x1, scaleLine.y1], [scaleLine.x2, scaleLine.y2]] as [number, number][]) {
+        ctx.fillStyle = '#5c7a3e';
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }, [baseImageData, zones, selectedZoneIds, showZoneNumbers, scaleLine]);
+
   const reset = () => {
     setImageSrc(null); setImageElement(null); setCanvasSize({ width: 0, height: 0 }); setBaseImageData(null);
     setZones([]); setMode('zone'); setScale(null); setScaleLine(null); setIsDrawingScale(false); setScaleStart(null);
