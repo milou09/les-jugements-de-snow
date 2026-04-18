@@ -507,6 +507,10 @@ setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(n
       )
     );
   }}
+  onAddToProject={(g) => {
+    if (globalGlasses.some((x) => x.id === g.id)) return;
+    setGlobalGlasses((p) => [...p, g]);
+  }}
 />
             <div style={{ height: '1.5rem' }} />
           </aside>
