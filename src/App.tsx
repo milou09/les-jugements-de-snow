@@ -8,6 +8,7 @@ import ResultScreen from './components/ResultScreen';
 import { Acorn, WildFlower, PineBranch, SnowPortrait } from './components/svg/Illustrations';
 import { useZoom } from './hooks/useZoom';
 import { detectZone } from './hooks/useZoneDetection';
+import './animations.css';
 import type { Zone } from './hooks/useZoneDetection';
 import type { SnowMood } from './components/svg/Illustrations';
 import {
