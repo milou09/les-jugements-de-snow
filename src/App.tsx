@@ -5,7 +5,7 @@ import ZonePanel from './components/ZonePanel';
 import GlassLibrary, { normalizeGlass } from './components/GlassLibrary';
 import type { Glass } from './components/GlassLibrary';
 import ResultScreen from './components/ResultScreen';
-import { Acorn, WildFlower, PineBranch } from './components/svg/Illustrations';
+import { Acorn, WildFlower, PineBranch, SnowPortrait } from './components/svg/Illustrations';
 import { useZoom } from './hooks/useZoom';
 import { detectZone } from './hooks/useZoneDetection';
 import type { Zone } from './hooks/useZoneDetection';
@@ -94,6 +94,8 @@ const [projectGlasses, setProjectGlasses] = useState<Glass[]>([]);
   const [activeTab, setActiveTab] = useState<'current' | 'saved' | 'bank'>('current');
   const [showZoneNumbers, setShowZoneNumbers] = useState(false);
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
+  const [showSnowWarning, setShowSnowWarning] = useState(false);
+const [pendingDeleteGlassId, setPendingDeleteGlassId] = useState<number | null>(null);
 
   const { zoomLevel, onWrapTouchStart, onWrapTouchMove, onWrapTouchEnd, onDoubleTap, getCanvasXY } = useZoom(canvasRef);
 
@@ -537,31 +539,91 @@ setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(n
         </div>
       )}
 
-      {activeTab === 'bank' && (
+     {activeTab === 'bank' && (
   <div style={{ maxWidth: 700, margin: '2rem auto', padding: '0 1.5rem', position: 'relative', zIndex: 1 }}>
     <GlassLibrary
-  glasses={globalGlasses}
-  onAdd={(g) => setGlobalGlasses((p) => [...p, g])}
-  onDelete={(id) => {
-  const usedInProject = projectGlasses.some((g) => g.id === id);
+      glasses={globalGlasses}
+      onAdd={(g) => setGlobalGlasses((p) => [...p, g])}
+      onDelete={(id) => {
+        const usedInProject = projectGlasses.some((g) => g.id === id);
 
-  if (usedInProject) {
-    const confirmDelete = window.confirm(
-      "🐶 Snow : Ce verre est utilisé dans ton projet... Tu es sûr de vouloir le supprimer ?"
-    );
-    if (!confirmDelete) return;
-  }
+        if (usedInProject) {
+          setPendingDeleteGlassId(id);
+          setShowSnowWarning(true);
+          return;
+        }
 
-  setGlobalGlasses((p) => p.filter((g) => g.id !== id));
-}}
-  onAddToProject={(g) => {
-    if (projectGlasses.some((x) => x.id === g.id)) return;
-    setProjectGlasses((p) => [...p, g]);
-  }}
-  projectGlassIds={projectGlasses.map((g) => g.id)}
-/>
+        setGlobalGlasses((p) => p.filter((g) => g.id !== id));
+      }}
+      onAddToProject={(g) => {
+        if (projectGlasses.some((x) => x.id === g.id)) return;
+        setProjectGlasses((p) => [...p, g]);
+      }}
+      projectGlassIds={projectGlasses.map((g) => g.id)}
+    />
   </div>
 )}
+
+{showSnowWarning && (
+  <div
+    style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(30,24,16,.45)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '1rem',
+    }}
+  >
+    <div
+      className="card"
+      style={{
+        width: '100%',
+        maxWidth: '420px',
+        textAlign: 'center',
+        boxShadow: '0 12px 40px rgba(30,20,10,.22)',
+      }}
+    >
+     <div style={{ marginBottom: '.75rem' }}>
+  <SnowPortrait mood="judging" />
+  <p className="tmu" style={{ fontSize: '.95rem', color: 'var(--ink-mid)', fontStyle: 'normal', lineHeight: 1.5, marginTop: '.5rem' }}>
+    Ce verre est utilisé dans ton projet. Tu veux vraiment le supprimer de la banque ?
+  </p>
+</div>
+
+      <div className="g2 mt3">
+        <button
+          type="button"
+          className="btn btn-ghost"
+          onClick={() => {
+            setShowSnowWarning(false);
+            setPendingDeleteGlassId(null);
+          }}
+        >
+          Annuler
+        </button>
+
+        <button
+          type="button"
+          className="btn btn-danger"
+          onClick={() => {
+            if (pendingDeleteGlassId !== null) {
+              setGlobalGlasses((p) =>
+                p.filter((g) => g.id !== pendingDeleteGlassId)
+              );
+            }
+            setShowSnowWarning(false);
+            setPendingDeleteGlassId(null);
+          }}
+        >
+          Supprimer
+        </button>
+      </div>
     </div>
-  );
+  </div>
+)}
+</div>
+);
 }
