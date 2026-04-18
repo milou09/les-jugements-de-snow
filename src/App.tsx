@@ -543,8 +543,17 @@ setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(n
   glasses={globalGlasses}
   onAdd={(g) => setGlobalGlasses((p) => [...p, g])}
   onDelete={(id) => {
-    setGlobalGlasses((p) => p.filter((g) => g.id !== id));
-  }}
+  const usedInProject = projectGlasses.some((g) => g.id === id);
+
+  if (usedInProject) {
+    const confirmDelete = window.confirm(
+      "🐶 Snow : Ce verre est utilisé dans ton projet... Tu es sûr de vouloir le supprimer ?"
+    );
+    if (!confirmDelete) return;
+  }
+
+  setGlobalGlasses((p) => p.filter((g) => g.id !== id));
+}}
   onAddToProject={(g) => {
     if (projectGlasses.some((x) => x.id === g.id)) return;
     setProjectGlasses((p) => [...p, g]);
