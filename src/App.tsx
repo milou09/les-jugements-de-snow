@@ -208,7 +208,7 @@ const [projectGlasses, setProjectGlasses] = useState<Glass[]>([]);
       }
       ctx.restore();
     }
-  }, [baseImageData, zones, selectedZoneIds, showZoneNumbers, scaleLine]);
+  }, [baseImageData, zones, selectedZoneIds, showZoneNumbers, scaleLine, activeTab]);
 
   const reset = () => {
     setImageSrc(null); setImageElement(null); setCanvasSize({ width: 0, height: 0 }); setBaseImageData(null);
