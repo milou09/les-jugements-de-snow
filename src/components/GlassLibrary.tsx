@@ -53,6 +53,7 @@ interface GlassLibraryProps {
   onAdd: (g: Glass) => void;
   onDelete: (id: number) => void;
   onAddToProject?: (g: Glass) => void;
+  projectGlassIds?: number[];
 }
 
 export default function GlassLibrary({
@@ -60,12 +61,14 @@ export default function GlassLibrary({
   onAdd,
   onDelete,
   onAddToProject,
+  projectGlassIds = [],
 }: GlassLibraryProps) {
   const [form, setForm] = useState({
     nom: '',
     prix_dm2: '',
     couleur: '#7dd3fc',
   });
+
   const [search, setSearch] = useState('');
   const [isOpen, setIsOpen] = useState(true);
 
@@ -95,10 +98,7 @@ export default function GlassLibrary({
   const filteredGlasses = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return glasses;
-
-    return glasses.filter((g) =>
-      g.nom.toLowerCase().includes(q)
-    );
+    return glasses.filter((g) => g.nom.toLowerCase().includes(q));
   }, [glasses, search]);
 
   return (
@@ -182,71 +182,60 @@ export default function GlassLibrary({
 
           {filteredGlasses.length > 0 && (
             <div className="stack-sm mt3">
-              {filteredGlasses.map((g) => (
-                <div key={g.id} className="glass-row">
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '.5rem',
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 14,
-                        height: 14,
-                        borderRadius: '50%',
-                        backgroundColor: g.couleur,
-                        border: '1px solid rgba(80,60,20,.2)',
-                        flexShrink: 0,
-                        display: 'inline-block',
-                      }}
-                    />
-                    <div>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: '.83rem',
-                          fontWeight: 500,
-                          color: 'var(--ink-mid)',
-                        }}
-                      >
-                        {g.nom}
-                      </p>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: '.73rem',
-                          color: 'var(--ink-faint)',
-                          fontStyle: 'italic',
-                        }}
-                      >
-                        {g.prix_dm2.toFixed(2)} €/dm²
-                      </p>
-                    </div>
-                  </div>
+              {filteredGlasses.map((g) => {
+                const alreadyAdded = projectGlassIds.includes(g.id);
 
-                  <div style={{ display: 'flex', gap: '.35rem' }}>
-                    {onAddToProject && (
+                return (
+                  <div key={g.id} className="glass-row">
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '.5rem',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 14,
+                          height: 14,
+                          borderRadius: '50%',
+                          backgroundColor: g.couleur,
+                          border: '1px solid rgba(80,60,20,.2)',
+                        }}
+                      />
+                      <div>
+                        <p style={{ margin: 0, fontSize: '.83rem' }}>
+                          {g.nom}
+                        </p>
+                        <p style={{ margin: 0, fontSize: '.73rem' }}>
+                          {g.prix_dm2.toFixed(2)} €/dm²
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '.35rem' }}>
+                      {onAddToProject && (
+                        <button
+                          type="button"
+                          disabled={alreadyAdded}
+                          onClick={() => onAddToProject(g)}
+                          className="btn btn-ghost btn-sm"
+                        >
+                          {alreadyAdded ? '✔ Déjà ajouté' : '➕ Projet'}
+                        </button>
+                      )}
+
                       <button
                         type="button"
-                        onClick={() => onAddToProject(g)}
-                        className="btn btn-ghost btn-sm"
+                        onClick={() => onDelete(g.id)}
+                        className="btn btn-danger btn-sm"
                       >
-                        ➕ Projet
+                        ✕
                       </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => onDelete(g.id)}
-                      className="btn btn-danger btn-sm"
-                    >
-                      ✕
-                    </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
