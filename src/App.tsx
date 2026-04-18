@@ -117,13 +117,20 @@ const [projectGlasses, setProjectGlasses] = useState<Glass[]>([]);
   }, [imageSrc]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !imageElement || !canvasSize.width) return;
-    canvas.width = canvasSize.width; canvas.height = canvasSize.height;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true }); if (!ctx) return;
-    ctx.drawImage(imageElement, 0, 0, canvasSize.width, canvasSize.height);
-    setBaseImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
-  }, [imageElement, canvasSize]);
+  if (activeTab !== 'current') return;
+
+  const canvas = canvasRef.current;
+  if (!canvas || !imageElement || !canvasSize.width) return;
+
+  canvas.width = canvasSize.width;
+  canvas.height = canvasSize.height;
+
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return;
+
+  ctx.drawImage(imageElement, 0, 0, canvasSize.width, canvasSize.height);
+  setBaseImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
+}, [imageElement, canvasSize, activeTab]);
 
 
   // ── Redraw canvas (surbrillance, numéros, ligne d'échelle) ──
