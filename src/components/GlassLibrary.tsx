@@ -221,7 +221,11 @@ export default function GlassLibrary({
                           onClick={() => onAddToProject(g)}
                           className="btn btn-ghost btn-sm"
                         >
-                          {alreadyAdded ? '✔ Déjà ajouté' : '➕ Projet'}
+                          {alreadyAdded
+  ? '✔ Déjà ajouté'
+  : onAddToProject
+    ? (projectGlassIds.length ? '➕ Projet' : '➕ Banque')
+    : '➕ Ajouter'}
                         </button>
                       )}
 
