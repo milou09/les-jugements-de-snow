@@ -141,7 +141,7 @@ export default function App() {
   const applyProjectState = (state: SavedProjectState) => {
     setMode('zone'); setSelectedZoneIds([]); setPendingScalePixels(null); setScaleInputCm(''); setShowResult(false);
     setZones(state.zones || []); setScale(state.scale ?? null); setScaleLine(state.scaleLine ?? null);
-    setGlasses((state.glasses || []).map(normalizeGlass).filter(Boolean) as Glass[]);
+    setGlasses(((state.glasses || []) as any[]).map(normalizeGlass).filter(Boolean) as Glass[]);
     setCopperPricePerMeter(state.copperPricePerMeter ?? ''); setSolderPricePerMeter(state.solderPricePerMeter ?? '');
     setLaborHours(state.laborHours ?? ''); setLaborRate(state.laborRate ?? '');
     setPricingMode(state.pricingMode ?? 'x2_materiaux'); setCustomFormula(state.customFormula ?? '(cost_total * 2.5) + 20');
@@ -160,16 +160,16 @@ export default function App() {
 
   const getXY = useCallback((e: React.PointerEvent) => {
     const canvas = canvasRef.current; if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    // Le canvas est centré dans un wrapper flex — on utilise le rect du canvas lui-même
-    // comme origine, pas celui du wrapper. On mappe coordonnées CSS → pixels natifs.
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    return {
-      x: Math.floor((e.clientX - rect.left) * scaleX),
-      y: Math.floor((e.clientY - rect.top) * scaleY),
-    };
-  }, []);
+    const wrap = canvasWrapRef.current; if (!wrap) return { x: 0, y: 0 };
+    const wrapRect = wrap.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+    return getCanvasXY(
+      e.clientX, e.clientY,
+      wrapRect,
+      canvas.width, canvasRect.width,
+      canvas.height, canvasRect.height
+    );
+  }, [getCanvasXY]);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!baseImageData) return; const { x, y } = getXY(e);
@@ -297,7 +297,7 @@ export default function App() {
             </div>
 
             <div className="card">
-              <p className="ctitle"><span>🕐</span> Main d'oeuvre</p>
+              <p className="ctitle"><span>🕐</span> Main d&apos;œuvre</p>
               <div className="g2 mt2">
                 <input type="number" inputMode="decimal" step="0.1" min="0" value={laborHours} onChange={(e) => setLaborHours(e.target.value)} className="inp" placeholder="Heures" />
                 <input type="number" inputMode="decimal" step="0.01" min="0" value={laborRate} onChange={(e) => setLaborRate(e.target.value)} className="inp" placeholder="euros/heure" />
@@ -313,7 +313,7 @@ export default function App() {
           <main className="center-col">
             <div className="center-toolbar">
               <button type="button" className={'btn ' + (mode === 'scale' ? 'btn-w' : 'btn-ghost')} onClick={() => setMode((p) => (p === 'scale' ? 'zone' : 'scale'))}>
-                {mode === 'scale' ? "Terminer l'echelle" : "Definir l'echelle"}
+                {mode === 'scale' ? "Terminer l'échelle" : "Définir l'échelle"}
               </button>
               <button type="button" className="btn btn-ghost" onClick={() => setShowZoneNumbers((p) => !p)}>
                 {showZoneNumbers ? '# Masquer n°' : '# Afficher n°'}
@@ -407,7 +407,7 @@ export default function App() {
           <div className="card">
             <p className="ctitle"><span>🗂️</span> Projets sauvegardes</p>
             {savedProjects.length === 0
-              ? <p className="tmu mt2">Aucun projet sauvegarde pour l'instant.</p>
+              ? <p className="tmu mt2">Aucun projet sauvegardé pour l&apos;instant.</p>
               : <div className="stack mt2">{savedProjects.map((project) => (
                 <div key={project.id} className="project-row">
                   <div><div className="tsm tbold">{project.name}</div><div className="tmu">{new Date(project.savedAt).toLocaleString('fr-FR')}</div></div>
