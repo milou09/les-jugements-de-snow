@@ -535,6 +535,7 @@ setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(n
     if (projectGlasses.some((x) => x.id === g.id)) return;
     setProjectGlasses((p) => [...p, g]);
   }}
+  projectGlassIds={projectGlasses.map((g) => g.id)}
 />
   </div>
 )}
