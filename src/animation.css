@@ -1,1 +1,76 @@
+@keyframes softFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
+@keyframes softPop {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes softPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+.fade-in {
+  animation: softFadeUp 0.22s ease;
+}
+
+.pop-in {
+  animation: softPop 0.22s ease;
+}
+
+.tab-panel {
+  animation: softFadeUp 0.2s ease;
+}
+
+.glass-row,
+.project-row,
+.zone-row,
+.card {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.glass-row:hover,
+.project-row:hover,
+.zone-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30,20,10,.08);
+}
+
+.btn {
+  transition: transform 0.12s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-attention:not(:disabled) {
+  animation: softPulse 1.6s ease-in-out infinite;
+}
+
+.snow-warning-overlay {
+  animation: softFadeUp 0.18s ease;
+}
+
+.snow-warning-card {
+  animation: softPop 0.22s ease;
+}
+
+.snow-warning-text {
+  animation: softFadeUp 0.28s ease;
+}
+
+.bank-added {
+  opacity: 0.72;
+}
