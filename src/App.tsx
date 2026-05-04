@@ -8,7 +8,7 @@ import ResultScreen from './components/ResultScreen';
 import { Acorn, WildFlower, PineBranch, SnowPortrait } from './components/svg/Illustrations';
 import { useZoom } from './hooks/useZoom';
 import { detectZone } from './hooks/useZoneDetection';
-import './animations.css';
+import './animation.css';
 import type { Zone } from './hooks/useZoneDetection';
 import type { SnowMood } from './components/svg/Illustrations';
 import {
@@ -21,7 +21,7 @@ const GLASS_STORAGE_KEY = 'vitrail_tiffany_glasses_v2';
 const PROJECTS_STORAGE_KEY = 'vitrail_tiffany_projects_v1';
 
 type SavedProjectState = {
-  imageSrc: string | null; zones: Zone[]; scale: number | null;
+  imageSrc: string | null; thumbnailSrc?: string | null; zones: Zone[]; scale: number | null;
   scaleLine: { x1: number; y1: number; x2: number; y2: number } | null;
   projectGlasses: Glass[]; copperPricePerMeter: string; solderPricePerMeter: string;
   laborHours: string; laborRate: string; pricingMode: string; customFormula: string;
@@ -80,7 +80,20 @@ export default function App() {
   const [selectedZoneIds, setSelectedZoneIds] = useState<number[]>([]);
   const [pendingScalePixels, setPendingScalePixels] = useState<number | null>(null);
   const [scaleInputCm, setScaleInputCm] = useState('');
-  const [globalGlasses, setGlobalGlasses] = useState<Glass[]>([]);
+  const [globalGlasses, setGlobalGlasses] = useState<Glass[]>(() => {
+  try {
+    const saved = localStorage.getItem(GLASS_STORAGE_KEY);
+    if (!saved) return [];
+
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.map(normalizeGlass).filter(Boolean) as Glass[];
+  } catch {
+    return [];
+  }
+});
+
 const [projectGlasses, setProjectGlasses] = useState<Glass[]>([]);
   const [copperPricePerMeter, setCopperPricePerMeter] = useState('');
   const [solderPricePerMeter, setSolderPricePerMeter] = useState('');
@@ -94,15 +107,21 @@ const [projectGlasses, setProjectGlasses] = useState<Glass[]>([]);
   const [resultIsRoast, setResultIsRoast] = useState(false);
   const [activeTab, setActiveTab] = useState<'current' | 'saved' | 'bank'>('current');
   const [showZoneNumbers, setShowZoneNumbers] = useState(false);
-  const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
+  const [savedProjects, setSavedProjects] = useState<SavedProject[]>(() => {
+  return loadSavedProjects();
+});
   const [showSnowWarning, setShowSnowWarning] = useState(false);
 const [pendingDeleteGlassId, setPendingDeleteGlassId] = useState<number | null>(null);
+const [showProjectOverwriteWarning, setShowProjectOverwriteWarning] = useState(false);
+const [pendingOverwriteSave, setPendingOverwriteSave] = useState<{
+  name: string;
+  existingId: string;
+  state: SavedProjectState;
+} | null>(null);
 
   const { zoomLevel, onWrapTouchStart, onWrapTouchMove, onWrapTouchEnd, onDoubleTap, getCanvasXY } = useZoom(canvasRef);
 
-  useEffect(() => { try { const s = localStorage.getItem(GLASS_STORAGE_KEY); if (s) { const p = JSON.parse(s); if (Array.isArray(p)) setGlobalGlasses(p.map(normalizeGlass).filter(Boolean) as Glass[]); } } catch {} }, []);
   useEffect(() => { localStorage.setItem(GLASS_STORAGE_KEY, JSON.stringify(globalGlasses)); }, [globalGlasses]);
-  useEffect(() => { setSavedProjects(loadSavedProjects()); }, []);
   useEffect(() => { saveSavedProjects(savedProjects); }, [savedProjects]);
 
   useEffect(() => {
@@ -133,7 +152,7 @@ const [pendingDeleteGlassId, setPendingDeleteGlassId] = useState<number | null>(
 
   ctx.drawImage(imageElement, 0, 0, canvasSize.width, canvasSize.height);
   setBaseImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
-}, [imageElement, canvasSize, activeTab]);
+}, [imageElement, canvasSize, activeTab, showResult]);
 
 
   // ── Redraw canvas (surbrillance, numéros, ligne d'échelle) ──
@@ -211,7 +230,7 @@ const [pendingDeleteGlassId, setPendingDeleteGlassId] = useState<number | null>(
       }
       ctx.restore();
     }
-  }, [baseImageData, zones, selectedZoneIds, showZoneNumbers, scaleLine, activeTab]);
+  }, [baseImageData, zones, selectedZoneIds, showZoneNumbers, scaleLine, activeTab, showResult]);
 
   const reset = () => {
     setImageSrc(null); setImageElement(null); setCanvasSize({ width: 0, height: 0 }); setBaseImageData(null);
@@ -227,25 +246,101 @@ const [pendingDeleteGlassId, setPendingDeleteGlassId] = useState<number | null>(
     const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader(); reader.onload = () => { setImageSrc(reader.result as string); }; reader.readAsDataURL(file);
   };
+const getProjectThumbnail = () => {
+  const canvas = canvasRef.current;
 
-  const collectCurrentProjectState = (): SavedProjectState => ({ imageSrc, zones, scale, scaleLine, projectGlasses, copperPricePerMeter, solderPricePerMeter, laborHours, laborRate, pricingMode, customFormula });
+  if (!canvas) return imageSrc ?? null;
+
+  try {
+    return canvas.toDataURL('image/png');
+  } catch {
+    return imageSrc ?? null;
+  }
+};
+  const collectCurrentProjectState = (): SavedProjectState => ({ imageSrc, thumbnailSrc: getProjectThumbnail(), zones, scale, scaleLine, projectGlasses, copperPricePerMeter, solderPricePerMeter, laborHours, laborRate, pricingMode, customFormula });
 
   const applyProjectState = (state: SavedProjectState) => {
-    setMode('zone'); setSelectedZoneIds([]); setPendingScalePixels(null); setScaleInputCm(''); setShowResult(false);
-    setZones(state.zones || []); setScale(state.scale ?? null); setScaleLine(state.scaleLine ?? null);
-setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(normalizeGlass).filter(Boolean) as Glass[]);
-    setCopperPricePerMeter(state.copperPricePerMeter ?? ''); setSolderPricePerMeter(state.solderPricePerMeter ?? '');
-    setLaborHours(state.laborHours ?? ''); setLaborRate(state.laborRate ?? '');
-    setPricingMode(state.pricingMode ?? 'x2_materiaux'); setCustomFormula(state.customFormula ?? '(cost_total * 2.5) + 20');
-    zoneCounterRef.current = (state.zones || []).reduce((m, z) => Math.max(m, z.id || 0), 0);
-    if (state.imageSrc) { setImageSrc(state.imageSrc); }
-    else { setImageSrc(null); setImageElement(null); setCanvasSize({ width: 0, height: 0 }); setBaseImageData(null); }
+  const legacyState = state as SavedProjectState & {
+    glasses?: unknown[];
   };
 
+  const restoredZones = (legacyState.zones || []).map((zone) => {
+    const pixelArray = Array.isArray(zone.pixelArray) ? zone.pixelArray : [];
+
+    return {
+      ...zone,
+      pixelArray,
+      pixelSet: new Set(pixelArray),
+    };
+  });
+
+  setMode('zone');
+  setSelectedZoneIds([]);
+  setPendingScalePixels(null);
+  setScaleInputCm('');
+  setShowResult(false);
+
+  setZones(restoredZones);
+  setScale(legacyState.scale ?? null);
+  setScaleLine(legacyState.scaleLine ?? null);
+
+  setProjectGlasses(
+    ((legacyState.projectGlasses || legacyState.glasses || []) as unknown[])
+      .map(normalizeGlass)
+      .filter(Boolean) as Glass[]
+  );
+
+  setCopperPricePerMeter(legacyState.copperPricePerMeter ?? '');
+  setSolderPricePerMeter(legacyState.solderPricePerMeter ?? '');
+  setLaborHours(legacyState.laborHours ?? '');
+  setLaborRate(legacyState.laborRate ?? '');
+  setPricingMode(legacyState.pricingMode ?? 'x2_materiaux');
+  setCustomFormula(legacyState.customFormula ?? '(cost_total * 2.5) + 20');
+
+  zoneCounterRef.current = restoredZones.length;
+
+  if (legacyState.imageSrc) {
+    setImageSrc(legacyState.imageSrc);
+  } else {
+    setImageSrc(null);
+    setImageElement(null);
+    setCanvasSize({ width: 0, height: 0 });
+    setBaseImageData(null);
+  }
+};
+
   const saveProject = () => {
-    const name = prompt('Nom du projet ?'); if (!name?.trim()) return;
-    setSavedProjects((prev) => [{ id: Date.now() + '_' + Math.random().toString(36).slice(2,8), name: name.trim(), savedAt: new Date().toISOString(), state: collectCurrentProjectState() }, ...prev]);
-  };
+  const name = prompt('Nom du projet ?');
+  const trimmedName = name?.trim();
+
+  if (!trimmedName) return;
+
+  const currentState = collectCurrentProjectState();
+
+  const existingProject = savedProjects.find(
+    (project) => project.name.trim().toLowerCase() === trimmedName.toLowerCase()
+  );
+
+  if (existingProject) {
+    setPendingOverwriteSave({
+      name: trimmedName,
+      existingId: existingProject.id,
+      state: currentState,
+    });
+    setShowProjectOverwriteWarning(true);
+    return;
+  }
+
+  setSavedProjects((prev) => [
+    {
+      id: Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      name: trimmedName,
+      savedAt: new Date().toISOString(),
+      state: currentState,
+    },
+    ...prev,
+  ]);
+};
 
   const openSavedProject = (p: SavedProject) => { applyProjectState(p.state); setActiveTab('current'); };
   const deleteSavedProject = (id: string) => { setSavedProjects((prev) => prev.filter((p) => p.id !== id)); };
@@ -289,7 +384,19 @@ setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(n
     if (!pendingScalePixels || pendingScalePixels <= 0) return;
     const cm = toSafeNumber(scaleInputCm, NaN); if (!isFinite(cm) || cm <= 0) return;
     const ns = cm / pendingScalePixels; setScale(ns);
-    setZones((prev) => prev.map((z) => { const a = z.area_px * ns * ns; const gl = glasses.find((g) => g.id === z.glassId); const p = gl ? gl.prix_dm2 / 100 : 0; return { ...z, area_cm2: a, zone_cost: a * p }; }));
+    setZones((prev) =>
+  prev.map((z) => {
+    const a = z.area_px * ns * ns;
+    const gl = projectGlasses.find((g) => g.id === z.glassId);
+    const p = gl ? gl.prix_dm2 / 100 : 0;
+
+    return {
+      ...z,
+      area_cm2: a,
+      zone_cost: a * p,
+    };
+  })
+);
     setMode('zone'); setScaleInputCm(''); setPendingScalePixels(null);
   };
 
@@ -528,12 +635,29 @@ setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(n
               ? <p className="tmu mt2">Aucun projet sauvegardé pour l&apos;instant.</p>
               : <div className="stack mt2">{savedProjects.map((project) => (
                 <div key={project.id} className="project-row">
-                  <div><div className="tsm tbold">{project.name}</div><div className="tmu">{new Date(project.savedAt).toLocaleString('fr-FR')}</div></div>
-                  <div className="row gap-sm">
-                    <button type="button" className="btn btn-g btn-sm" onClick={() => openSavedProject(project)}>Ouvrir</button>
-                    <button type="button" className="btn btn-danger btn-sm" onClick={() => deleteSavedProject(project.id)}>Supprimer</button>
-                  </div>
-                </div>
+  <div className="project-info">
+    <div className="project-thumb">
+      {(project.state.thumbnailSrc || project.state.imageSrc) ? (
+  <img
+    src={project.state.thumbnailSrc || project.state.imageSrc || ''}
+    alt={`Aperçu de ${project.name}`}
+  />
+) : (
+  <span>?</span>
+)}
+    </div>
+
+    <div>
+      <div className="tsm tbold">{project.name}</div>
+      <div className="tmu">{new Date(project.savedAt).toLocaleString('fr-FR')}</div>
+    </div>
+  </div>
+
+  <div className="row gap-sm">
+    <button type="button" className="btn btn-g btn-sm" onClick={() => openSavedProject(project)}>Ouvrir</button>
+    <button type="button" className="btn btn-danger btn-sm" onClick={() => deleteSavedProject(project.id)}>Supprimer</button>
+  </div>
+</div>
               ))}</div>
             }
           </div>
@@ -621,6 +745,82 @@ setProjectGlasses(((state.projectGlasses || state.glasses || []) as any[]).map(n
           }}
         >
           Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+{showProjectOverwriteWarning && pendingOverwriteSave && (
+  <div
+    className="snow-warning-overlay"
+    style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(30,24,16,.45)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '1rem',
+    }}
+  >
+    <div
+      className="card"
+      style={{
+        width: '100%',
+        maxWidth: '420px',
+        textAlign: 'center',
+        boxShadow: '0 12px 40px rgba(30,20,10,.22)',
+      }}
+    >
+      <div style={{ marginBottom: '.75rem' }}>
+        <SnowPortrait mood="judging" />
+        <p
+          className="tmu snow-warning-text"
+          style={{
+            fontSize: '.95rem',
+            color: 'var(--ink-mid)',
+            fontStyle: 'normal',
+            lineHeight: 1.5,
+            marginTop: '.5rem',
+          }}
+        >
+          Un projet nommé « {pendingOverwriteSave.name} » existe déjà.
+          Tu veux remplacer l’ancienne sauvegarde par celle-ci ?
+        </p>
+      </div>
+
+      <div className="g2 mt3">
+        <button
+          type="button"
+          className="btn btn-ghost"
+          onClick={() => {
+            setShowProjectOverwriteWarning(false);
+            setPendingOverwriteSave(null);
+          }}
+        >
+          Annuler
+        </button>
+
+        <button
+          type="button"
+          className="btn btn-danger"
+          onClick={() => {
+            setSavedProjects((prev) => [
+              {
+                id: pendingOverwriteSave.existingId,
+                name: pendingOverwriteSave.name,
+                savedAt: new Date().toISOString(),
+                state: pendingOverwriteSave.state,
+              },
+              ...prev.filter((project) => project.id !== pendingOverwriteSave.existingId),
+            ]);
+
+            setShowProjectOverwriteWarning(false);
+            setPendingOverwriteSave(null);
+          }}
+        >
+          Remplacer
         </button>
       </div>
     </div>
